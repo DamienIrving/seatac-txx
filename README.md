@@ -8,7 +8,7 @@ The `Makefile` defines the rules to make the figures in the paper.
 - Figure 2: `make plot-historgram CONFIG=config_seatac.mk`
 - Figure 4: `make plot-reanalysis-hot-day CONFIG=config_seatac.mk`
 - Figure 5: `make plot-model-hot-day CONFIG=config_seatac.mk`
-  (see `projects/seatac/find_hottest_model_day.ipynb` for information about the hottest day)
+  (see `find_hottest_model_day.ipynb` for information about the hottest day)
 - Figure 7: `make plot-sample-size-dist CONFIG=config_seatac.mk`
 - Figure 8: `make plot-likelihoods CONFIG=config_seatac.mk`
 - Figure 9: `make plot-return-periods CONFIG=config_seatac.mk`
