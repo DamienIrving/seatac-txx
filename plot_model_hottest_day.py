@@ -2,11 +2,6 @@
 
 import pdb
 import sys
-script_dir = sys.path[0]
-repo_dir = '/'.join(script_dir.split('/')[:-2])
-module_dir = repo_dir + '/unseen'
-sys.path.insert(1, module_dir)
-
 import argparse
 import warnings
 warnings.filterwarnings('ignore')
@@ -17,9 +12,9 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import xarray as xr
 
-import fileio
-import general_utils
-import plot_reanalysis_hottest_day as prhd
+from unseen import fileio
+from unseen import general_utils
+from unseen import plot_reanalysis_hottest_day as prhd
 
 
 def get_max_indices(infile, config_file, lat, lon, time_bounds):
@@ -67,6 +62,7 @@ def _main(args):
     ds_max['tasmax'] = general_utils.convert_units(ds_max['tasmax'], 'C')
     ds_max = ds_max.compute()
 
+    repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
     metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
     prhd.plot_usa(ds_max['tasmax'], ds_max['h500'], args.outfile, metadata_key, new_log,

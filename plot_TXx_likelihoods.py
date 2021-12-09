@@ -2,11 +2,6 @@
 
 import pdb
 import sys
-script_dir = sys.path[0]
-repo_dir = '/'.join(script_dir.split('/')[:-2])
-module_dir = repo_dir + '/unseen'
-sys.path.insert(1, module_dir)
-
 import argparse
 import warnings
 warnings.filterwarnings('ignore')
@@ -15,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import fileio
-import general_utils
+from unseen import fileio
+from unseen import general_utils
 
 
 def likelihood_curve(da, threshold):
@@ -49,7 +44,7 @@ def _main(args):
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
 
     fig, ax = plt.subplots(figsize=[10, 6])
-    thresholds = [37, 39, 41, 43, 45]
+    thresholds = [36, 38, 40, 42, 44, 46]
     for threshold in thresholds:
         likelihoods, sample_sizes = likelihood_curve(ds_ensemble_stacked['tasmax'], threshold)
         xvals = np.arange(len(sample_sizes)) + 1
@@ -62,6 +57,7 @@ def _main(args):
     ax.legend()
 
     infile_logs = {args.ensemble_file : ds_ensemble.attrs['history']}
+    repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
     metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
     plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')

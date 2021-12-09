@@ -2,11 +2,6 @@
 
 import pdb
 import sys
-script_dir = sys.path[0]
-repo_dir = '/'.join(script_dir.split('/')[:-2])
-module_dir = repo_dir + '/unseen'
-sys.path.insert(1, module_dir)
-
 import argparse
 import logging
 import warnings
@@ -17,9 +12,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import genextreme as gev
 
-import fileio
-import general_utils
-import indices
+from unseen import fileio
+from unseen import general_utils
+from unseen import indices
 
 
 def _main(args):
@@ -74,6 +69,7 @@ def _main(args):
 
     infile_logs = {args.bias_corrected_model_file: ds_bias.attrs['history'],
                    args.obs_file: ds_obs.attrs['history']}
+    repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
     metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
     plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')

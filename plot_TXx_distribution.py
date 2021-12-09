@@ -2,11 +2,6 @@
 
 import pdb
 import sys
-script_dir = sys.path[0]
-repo_dir = '/'.join(script_dir.split('/')[:-2])
-module_dir = repo_dir + '/unseen'
-sys.path.insert(1, module_dir)
-
 import argparse
 import warnings
 warnings.filterwarnings('ignore')
@@ -19,9 +14,9 @@ import seaborn as sns
 import pandas as pd
 import xarray as xr
 
-import fileio
-import array_handling
-import general_utils
+from unseen import fileio
+from unseen import array_handling
+from unseen import general_utils
 
 
 def _main(args):
@@ -54,6 +49,7 @@ def _main(args):
     plt.legend(ncol=2)
 
     infile_logs = {args.ensemble_file : ds_init.attrs['history']}
+    repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
     metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
     plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')

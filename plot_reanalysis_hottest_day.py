@@ -2,11 +2,6 @@
 
 import pdb
 import sys
-script_dir = sys.path[0]
-repo_dir = '/'.join(script_dir.split('/')[:-2])
-module_dir = repo_dir + '/unseen'
-sys.path.insert(1, module_dir)
-
 import argparse
 import warnings
 warnings.filterwarnings('ignore')
@@ -16,8 +11,8 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import xarray as xr
 
-import fileio
-import general_utils
+from unseen import fileio
+from unseen import general_utils
 
 
 def plot_usa(da_tasmax, da_h500, outfile, metadata_key, command_log,
@@ -76,6 +71,7 @@ def _main(args):
     da_tasmax = ds_tas['t2m'].max('time')
     da_tasmax = da_tasmax - 273.15
 
+    repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
     metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
     plot_usa(da_tasmax, da_h500, args.outfile, metadata_key, new_log,
