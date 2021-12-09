@@ -26,6 +26,22 @@ def return_period(data, score):
     return 1. / exceedance_probability
 
 
+def plot(fname, model_subsample, gev_shape, gev_loc, gev_scale):
+    """Plot one sample"""
+
+    fig, ax = plt.subplots(figsize=[10, 8])
+    bins = np.arange(23, 49)
+    gev_xvals = np.arange(22, 49, 0.1)
+    model_subsample.plot.hist(bins=bins,
+                              density=True,
+                              rwidth=0.9,
+                              alpha=0.7,
+                              color='tab:blue')
+    gev_pdf = gev.pdf(gev_xvals, gev_shape, gev_loc, gev_scale)
+    plt.plot(gev_xvals, gev_pdf, color='tab:blue', linewidth=2.0)
+    plt.savefig(fname, bbox_inches='tight', facecolor='white')
+
+
 def _main(args):
     """Run the command line program."""
 
@@ -43,9 +59,9 @@ def _main(args):
     full_model_return_period = return_period(ds_ensemble_stacked['tasmax'].values, threshold)
     logging.info(f'TXx={threshold}C return period in full model ensemble: {full_model_return_period}')
 
-    gev_shape, gev_loc, gev_scale = indices.fit_gev(ds_ensemble_stacked['tasmax'].values, use_estimates=True)
-    gev_data = gev.rvs(gev_shape, loc=gev_loc, scale=gev_scale, size=args.gev_samples)
-    full_gev_return_period = return_period(gev_data, threshold)
+    full_gev_shape, full_gev_loc, full_gev_scale = indices.fit_gev(ds_ensemble_stacked['tasmax'].values, generate_estimates=True)
+    full_gev_data = gev.rvs(full_gev_shape, loc=full_gev_loc, scale=full_gev_scale, size=args.gev_samples)
+    full_gev_return_period = return_period(full_gev_data, threshold)
     logging.info(f'TXx={threshold}C return period from GEV fit to full model ensemble: {full_gev_return_period}')
 
     df_model_return_period = pd.DataFrame([full_model_return_period]*n_repeats, columns=[population_size])
@@ -56,15 +72,23 @@ def _main(args):
         model_estimates = []
         gev_estimates = []
         for resample in range(n_repeats):
-            random_indexes = np.random.choice(population_size, size=sample_size, replace=False)
-            #random_indexes.sort()
-            model_subsample = ds_ensemble_stacked['tasmax'].isel({'sample': random_indexes})
+            gev_shape = 100
+            while gev_shape > 1.0:
+                random_indexes = np.random.choice(population_size, size=sample_size, replace=False)
+                #random_indexes.sort()
+                model_subsample = ds_ensemble_stacked['tasmax'].isel({'sample': random_indexes})
+                gev_shape, gev_loc, gev_scale = indices.fit_gev(model_subsample.values, user_estimates=[full_gev_loc, full_gev_scale])
             model_return_period = return_period(model_subsample.values, threshold)
             model_estimates.append(model_return_period)
-            gev_shape, gev_loc, gev_scale = indices.fit_gev(model_subsample.values, use_estimates=False)
             gev_data = gev.rvs(gev_shape, loc=gev_loc, scale=gev_scale, size=args.gev_samples)  
             gev_return_period = return_period(gev_data, threshold)
             gev_estimates.append(gev_return_period)
+            if args.plot:
+                if resample < 10:
+                    fname = f'plot_sample-size-{sample_size}_repeat-{resample}.png'
+                    print(fname, gev_shape, gev_loc, gev_scale)
+                    plot(fname, model_subsample, gev_shape, gev_loc, gev_scale)
+
         df_model_return_period[sample_size] = model_estimates
         df_gev_return_period[sample_size] = gev_estimates
 
@@ -102,6 +126,8 @@ if __name__ == '__main__':
                         help='name of logfile (default = same as outfile but with .log extension)')
     parser.add_argument('--gev_samples', type=int, default=10000,
                         help='number of times to sample the GEVs')
+    parser.add_argument('--plot', action='store_true', default=False,
+                        help='Plot some of the samples')
     
     args = parser.parse_args()
     _main(args)
