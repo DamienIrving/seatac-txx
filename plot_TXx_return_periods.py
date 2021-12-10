@@ -96,15 +96,28 @@ def _main(args):
     df_gev_return_period = df_gev_return_period.reindex(sorted(df_gev_return_period.columns), axis=1)
 
     fig, (ax1, ax2) = plt.subplots(2, figsize=[10, 12])
+    df_model_return_period = df_model_return_period.replace(np.inf, np.nan)
+    model_inf_count = df_model_return_period.isna().sum().to_string()
+    logging.info(f'Infinite return periods (out of {n_repeats} repeats) in model samples:\n{model_inf_count}')
+    df_model_return_period[10] = np.nan
+    df_model_return_period[50] = np.nan
+    df_model_return_period[100] = np.nan
     df_model_return_period.boxplot(ax=ax1)
     ax1.set_title('(a) Return periods from model samples')
     ax1.set_xlabel(' ')
     ax1.set_ylabel('return period for TXx=42.2C (years)')
-    
-    df_gev_return_period.mask(df_gev_return_period > 1000).boxplot(ax=ax2)
+
+    df_gev_return_period = df_gev_return_period.replace(np.inf, np.nan)
+    gev_inf_count = df_gev_return_period.isna().sum().to_string()
+    logging.info(f'Infinite return periods (out of {n_repeats} repeats) in GEV samples:\n{gev_inf_count}')
+    df_gev_return_period[10] = np.nan
+    df_gev_return_period[50] = np.nan
+    df_gev_return_period[100] = np.nan
+    df_gev_return_period.boxplot(ax=ax2)
     ax2.set_title('(b) Return periods from GEV fits to model samples')
     ax2.set_xlabel('sample size')
     ax2.set_ylabel('return period for TXx=42.2C (years)')
+    ax2.set_ylim(-100, 2100)
 
     infile_logs = {args.ensemble_file : ds_ensemble.attrs['history']}
     repo_dir = sys.path[0]
