@@ -24,11 +24,11 @@ def _main(args):
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
     general_utils.set_plot_params(args.plotparams)
     
-    ds_obs = fileio.open_file(args.obs_file)
+    ds_obs = fileio.open_dataset(args.obs_file)
     obs_shape, obs_loc, obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
     logging.info(f'Observations GEV fit: shape={obs_shape}, location={obs_loc}, scale={obs_scale}')
 
-    ds_raw = fileio.open_file(args.raw_model_file)
+    ds_raw = fileio.open_dataset(args.raw_model_file)
     ds_raw_stacked = ds_raw.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
     raw_shape, raw_loc, raw_scale = indices.fit_gev(ds_raw_stacked['tasmax'].values, use_estimates=True)
     logging.info(f'Model (raw) GEV fit: shape={raw_shape}, location={raw_loc}, scale={raw_scale}')

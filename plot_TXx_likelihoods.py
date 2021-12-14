@@ -40,7 +40,7 @@ def _main(args):
 
     general_utils.set_plot_params(args.plotparams)
     
-    ds_ensemble = fileio.open_file(args.ensemble_file)
+    ds_ensemble = fileio.open_dataset(args.ensemble_file)
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
 
     fig, ax = plt.subplots(figsize=[10, 6])

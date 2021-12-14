@@ -11,8 +11,7 @@ BASE_PERIOD=2004-01-01 2020-12-31
 
 CONFIG_DIR=/home/599/dbi599/unseen/config
 SEATAC_DIR=/g/data/xv83/dbi599/seatac
-
-DASK_CONFIG=${CONFIG_DIR}/dask_local.yml
+DASK_CONFIG=dask_local.yml
 
 FCST_DATA_1990S := $(sort $(wildcard /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-199[5,6,7,8,9]*/atmos_isobaric_daily.zarr.zip))
 FCST_DATA_2000S := $(sort $(wildcard /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-2*/atmos_isobaric_daily.zarr.zip))

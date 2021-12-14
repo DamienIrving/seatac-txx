@@ -49,7 +49,7 @@ def _main(args):
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
     general_utils.set_plot_params(args.plotparams)
     
-    ds_ensemble = fileio.open_file(args.ensemble_file)
+    ds_ensemble = fileio.open_dataset(args.ensemble_file)
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
 
     population_size = ds_ensemble_stacked['tasmax'].size

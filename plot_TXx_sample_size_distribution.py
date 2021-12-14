@@ -22,7 +22,7 @@ def _main(args):
     logfile = args.logfile if args.logfile else args.outfile.split('.')[0] + '.log'
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
     
-    ds_ensemble = fileio.open_file(args.ensemble_file)
+    ds_ensemble = fileio.open_dataset(args.ensemble_file)
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
 
     population_size = ds_ensemble_stacked['tasmax'].size

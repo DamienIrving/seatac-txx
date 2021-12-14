@@ -8,12 +8,12 @@ PLOT_PARAMS=plotparams_publication.yml
 ## tasmax-obs : preparation of observed tasmax data
 tasmax-obs : ${OBS_TASMAX_FILE}
 ${OBS_TASMAX_FILE} : ${OBS_DATA} ${OBS_METADATA}
-	fileio $< obs $@ --metadata_file $(word 2,$^) --variables tasmax --units ${UNITS} --no_leap_day --input_freq D 
+	fileio $< $@ --metadata_file $(word 2,$^) --variables tasmax --units ${UNITS} --no_leap_day --input_freq D 
 
 ## tasmax-forecast : preparation of CAFE tasmax data
 tasmax-forecast : ${FCST_TASMAX_FILE}
 ${FCST_TASMAX_FILE} : ${FCST_METADATA}
-	fileio ${FCST_DATA} forecast $@ --metadata_file $< --variables tasmax --units ${UNITS} --no_leap_day --input_freq D --spatial_coords ${LAT} ${LON} --output_chunks lead_time=50 --dask_config ${DASK_CONFIG}
+	fileio ${FCST_DATA} $@ --forecast --metadata_file $< --variables tasmax --units ${UNITS} --no_leap_day --input_freq D --spatial_coords ${LAT} ${LON} --output_chunks lead_time=50 --dask_config ${DASK_CONFIG}
 
 ## tasmax-bias-correction : bias correct tasmax data using observations
 tasmax-bias-correction : ${FCST_TASMAX_BIAS_CORRECTED_FILE}
@@ -23,17 +23,17 @@ ${FCST_TASMAX_BIAS_CORRECTED_FILE} : ${FCST_TASMAX_FILE} ${OBS_TASMAX_FILE}
 ## calc-txx-obs : calculate annual daily maximum temperature from observational data
 calc-txx-obs : ${OBS_TXX_FILE}
 ${OBS_TXX_FILE} : ${OBS_TASMAX_FILE}
-	fileio $< obs $@ --variables tasmax --time_freq ${TIME_FREQ} --time_agg ${TIME_AGG} --input_freq D 
+	fileio $< $@ --variables tasmax --time_freq ${TIME_FREQ} --time_agg ${TIME_AGG} --input_freq D 
 
 ## calc-txx-forecast : calculate annual daily maximum temperature from forecast data
 calc-txx-forecast : ${FCST_TXX_FILE}
 ${FCST_TXX_FILE} : ${FCST_TASMAX_FILE}
-	fileio $< obs $@ --variables tasmax --time_freq ${TIME_FREQ} --time_agg ${TIME_AGG} --complete_time_agg_periods --input_freq D 
+	fileio $< $@ --variables tasmax --time_freq ${TIME_FREQ} --time_agg ${TIME_AGG} --complete_time_agg_periods --input_freq D 
 
 ## calc-txx-forecast-bias-corrected : calculate annual daily maximum temperature from bias corrected forecast data
 calc-txx-forecast-bias-corrected : ${FCST_TXX_BIAS_CORRECTED_FILE}
 ${FCST_TXX_BIAS_CORRECTED_FILE} : ${FCST_TASMAX_BIAS_CORRECTED_FILE}
-	fileio $< obs $@ --variables tasmax --time_freq ${TIME_FREQ} --time_agg ${TIME_AGG} --complete_time_agg_periods --input_freq D 
+	fileio $< $@ --variables tasmax --time_freq ${TIME_FREQ} --time_agg ${TIME_AGG} --complete_time_agg_periods --input_freq D 
 
 ## similarity-test : similarity test between observations and bias corrected forecast
 #similarity-test : ${SIMILARITY_FILE}

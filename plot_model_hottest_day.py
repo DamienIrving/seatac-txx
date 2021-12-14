@@ -20,12 +20,12 @@ from unseen import plot_reanalysis_hottest_day as prhd
 def get_max_indices(infile, config_file, lat, lon, time_bounds):
     """Get the time and ensemble index for hottest day at SeaTac"""
 
-    ds = fileio.open_file(infile,
-                          variables=['tasmax'],
-                          metadata_file=config_file,
-                          spatial_coords=[lat, lon],
-                          sel={'time': time_bounds}
-                         )
+    ds = fileio.open_dataset(infile,
+                             variables=['tasmax'],
+                             metadata_file=config_file,
+                             spatial_coords=[lat, lon],
+                             sel={'time': time_bounds}
+                            )
 
     argmax = ds['tasmax'].argmax(dim=['ensemble', 'time'])
 
@@ -54,10 +54,10 @@ def _main(args):
 
     time_idx, ens_idx = get_max_indices(args.infile, args.config, args.lat, args.lon, time_bounds) 
 
-    ds = fileio.open_file(args.infile,
-                          variables=['h500', 'tasmax'],
-                          metadata_file=args.config,
-                          sel={'time': time_bounds})
+    ds = fileio.open_dataset(args.infile,
+                             variables=['h500', 'tasmax'],
+                             metadata_file=args.config,
+                             sel={'time': time_bounds})
     ds_max = ds.isel({'ensemble': ens_idx, 'time': time_idx})
     ds_max['tasmax'] = general_utils.convert_units(ds_max['tasmax'], 'C')
     ds_max = ds_max.compute()
