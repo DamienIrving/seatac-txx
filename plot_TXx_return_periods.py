@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import genextreme as gev
+import seaborn as sns
 
 from unseen import fileio
 from unseen import general_utils
@@ -54,7 +55,6 @@ def _main(args):
 
     population_size = ds_ensemble_stacked['tasmax'].size
     threshold = 42.2
-    n_repeats = 1000
 
     full_model_return_period = return_period(ds_ensemble_stacked['tasmax'].values, threshold)
     logging.info(f'TXx={threshold}C return period in full model ensemble: {full_model_return_period}')
@@ -64,14 +64,14 @@ def _main(args):
     full_gev_return_period = return_period(full_gev_data, threshold)
     logging.info(f'TXx={threshold}C return period from GEV fit to full model ensemble: {full_gev_return_period}')
 
-    df_model_return_period = pd.DataFrame([full_model_return_period]*n_repeats, columns=[population_size])
-    df_gev_return_period = pd.DataFrame([full_gev_return_period]*n_repeats, columns=[population_size])
-
-    for sample_size in [10, 50, 100, 500, 1000, 5000, 10000]:
+    full_data = {'return_period': [full_model_return_period, full_gev_return_period],
+                 'sample_size': [population_size, population_size],
+                 'source': ['model samples', 'GEV fits to model samples']}
+    df = pd.DataFrame(full_data)
+    sample_list = [10, 50, 100, 500, 1000, 5000, 10000]
+    for sample_size in sample_list:
         print(sample_size)
-        model_estimates = []
-        gev_estimates = []
-        for resample in range(n_repeats):
+        for resample in range(args.n_repeats):
             gev_shape = 100
             while gev_shape > 1.0:
                 random_indexes = np.random.choice(population_size, size=sample_size, replace=False)
@@ -79,47 +79,45 @@ def _main(args):
                 model_subsample = ds_ensemble_stacked['tasmax'].isel({'sample': random_indexes})
                 gev_shape, gev_loc, gev_scale = indices.fit_gev(model_subsample.values, user_estimates=[full_gev_loc, full_gev_scale])
             model_return_period = return_period(model_subsample.values, threshold)
-            model_estimates.append(model_return_period)
+            df = df.append({'return_period': model_return_period,
+                            'sample_size': sample_size,
+                            'source': 'model samples'}, 
+                                                        ignore_index=True)
             gev_data = gev.rvs(gev_shape, loc=gev_loc, scale=gev_scale, size=args.gev_samples)  
             gev_return_period = return_period(gev_data, threshold)
-            gev_estimates.append(gev_return_period)
+            df = df.append({'return_period': gev_return_period,
+                            'sample_size': sample_size,
+                            'source': 'GEV fits to model samples'},
+                            ignore_index=True)
             if args.plot:
                 if resample < 10:
                     fname = f'plot_sample-size-{sample_size}_repeat-{resample}.png'
                     print(fname, gev_shape, gev_loc, gev_scale)
                     plot(fname, model_subsample, gev_shape, gev_loc, gev_scale)
 
-        df_model_return_period[sample_size] = model_estimates
-        df_gev_return_period[sample_size] = gev_estimates
+    df = df.replace(np.inf, np.nan)
+    for sample_size in sample_list:
+        model_inf_count = df['return_period'].loc[(df['source'] == 'model samples') & (df['sample_size'] == sample_size)].isna().sum()
+        logging.info(f'Infinite return periods (out of {args.n_repeats} repeats) in model samples (sample size {sample_size}): {model_inf_count}')
+        gev_inf_count = df['return_period'].loc[(df['source'] == 'GEV fits to model samples') & (df['sample_size'] == sample_size)].isna().sum()
+        logging.info(f'Infinite return periods (out of {args.n_repeats} repeats) in GEV samples (sample size {sample_size}): {gev_inf_count}')
+    df['return_period'].loc[df['sample_size'] == 10] = np.nan
+    df['return_period'].loc[df['sample_size'] == 50] = np.nan
+    df['return_period'].loc[df['sample_size'] == 100] = np.nan
 
-    df_model_return_period = df_model_return_period.reindex(sorted(df_model_return_period.columns), axis=1)
-    df_gev_return_period = df_gev_return_period.reindex(sorted(df_gev_return_period.columns), axis=1)
+    #sns.set_style('whitegrid')
+    fig, ax = plt.subplots(figsize=[10, 6])
+    sns.boxplot(x='sample_size', y='return_period', hue='source', data=df)
+    ax.set_title('Return periods from model ensemble')
+    ax.set_xlabel('sample size')
+    ax.set_ylabel('return period for TXx=42.2C (years)')
+    ax.set_ylim(-100, 2100)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=handles, labels=labels)
+    ax.set_axisbelow(True)
+    ax.grid(True)
 
-    fig, (ax1, ax2) = plt.subplots(2, figsize=[10, 12])
-    df_model_return_period = df_model_return_period.replace(np.inf, np.nan)
-    model_inf_count = df_model_return_period.isna().sum().to_string()
-    logging.info(f'Infinite return periods (out of {n_repeats} repeats) in model samples:\n{model_inf_count}')
-    df_model_return_period[10] = np.nan
-    df_model_return_period[50] = np.nan
-    df_model_return_period[100] = np.nan
-    df_model_return_period.boxplot(ax=ax1)
-    ax1.set_title('(a) Return periods from model samples')
-    ax1.set_xlabel(' ')
-    ax1.set_ylabel('return period for TXx=42.2C (years)')
-
-    df_gev_return_period = df_gev_return_period.replace(np.inf, np.nan)
-    gev_inf_count = df_gev_return_period.isna().sum().to_string()
-    logging.info(f'Infinite return periods (out of {n_repeats} repeats) in GEV samples:\n{gev_inf_count}')
-    df_gev_return_period[10] = np.nan
-    df_gev_return_period[50] = np.nan
-    df_gev_return_period[100] = np.nan
-    df_gev_return_period.boxplot(ax=ax2)
-    ax2.set_title('(b) Return periods from GEV fits to model samples')
-    ax2.set_xlabel('sample size')
-    ax2.set_ylabel('return period for TXx=42.2C (years)')
-    ax2.set_ylim(-100, 2100)
-
-    infile_logs = {args.ensemble_file : ds_ensemble.attrs['history']}
+    infile_logs = {args.ensemble_file: ds_ensemble.attrs['history']}
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
     metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
@@ -139,6 +137,8 @@ if __name__ == '__main__':
                         help='name of logfile (default = same as outfile but with .log extension)')
     parser.add_argument('--gev_samples', type=int, default=10000,
                         help='number of times to sample the GEVs')
+    parser.add_argument('--n_repeats', type=int, default=1000,
+                        help='number of times to repeat each sample size')
     parser.add_argument('--plot', action='store_true', default=False,
                         help='Plot some of the samples')
     
