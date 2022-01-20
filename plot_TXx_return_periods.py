@@ -14,8 +14,8 @@ from scipy.stats import genextreme as gev
 import seaborn as sns
 
 from unseen import fileio
-from unseen import general_utils
 from unseen import indices
+import plotting_utils
 
 
 def return_period(data, score):
@@ -48,7 +48,7 @@ def _main(args):
 
     logfile = args.logfile if args.logfile else args.outfile.split('.')[0] + '.log'
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
-    general_utils.set_plot_params(args.plotparams)
+    plotting_utils.set_plot_params(args.plotparams)
     
     ds_ensemble = fileio.open_dataset(args.ensemble_file)
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
@@ -120,7 +120,7 @@ def _main(args):
     infile_logs = {args.ensemble_file: ds_ensemble.attrs['history']}
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
-    metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
+    metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
     plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')
 
 

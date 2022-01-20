@@ -15,6 +15,7 @@ import xarray as xr
 from unseen import fileio
 from unseen import general_utils
 from unseen import plot_reanalysis_hottest_day as prhd
+import plotting_utils
 
 
 def get_max_indices(infile, config_file, lat, lon, time_bounds):
@@ -49,7 +50,7 @@ def _main(args):
 
     logfile = args.logfile if args.logfile else args.outfile.split('.')[0] + '.log'
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
-    general_utils.set_plot_params(args.plotparams)
+    plotting_utils.set_plot_params(args.plotparams)
     time_bounds = slice(f'{args.year}-01-01', f'{args.year}-12-31')
 
     time_idx, ens_idx = get_max_indices(args.infile, args.config, args.lat, args.lon, time_bounds) 
@@ -64,7 +65,7 @@ def _main(args):
 
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
-    metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
+    metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
     prhd.plot_usa(ds_max['tasmax'], ds_max['h500'], args.outfile, metadata_key, new_log,
                   'Model', point=[args.lon, args.lat])
 

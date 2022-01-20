@@ -13,7 +13,7 @@ import xarray as xr
 
 from unseen import fileio
 from unseen import array_handling
-from unseen import general_utils
+import plotting_utils
 
 
 def log_sample_counts(years, counts):
@@ -29,7 +29,7 @@ def _main(args):
 
     logfile = args.logfile if args.logfile else args.outfile.split('.')[0] + '.log'
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
-    general_utils.set_plot_params(args.plotparams)
+    plotting_utils.set_plot_params(args.plotparams)
 
     ds_init = xr.open_zarr(args.ensemble_file)
     ds_time = array_handling.reindex_forecast(ds_init)
@@ -71,7 +71,7 @@ def _main(args):
     infile_logs = {args.ensemble_file : ds_init.attrs['history']}
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
-    metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
+    metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
     plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')
 
 
