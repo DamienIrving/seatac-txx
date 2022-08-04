@@ -17,16 +17,17 @@ from unseen import general_utils
 import plotting_utils
 
 
-def get_max_indices(infile, config_file, point, time_bounds):
+def get_max_indices(infile, config_file, lat, lon, time_bounds):
     """Get the time and ensemble index for hottest day at SeaTac"""
 
     ds = fileio.open_dataset(
         infile,
         variables=['tasmax'],
         metadata_file=config_file,
-        spatial_coords=point,
+        spatial_coords=[lat, lon],
         sel={'time': time_bounds}
     )
+
     argmax = ds['tasmax'].argmax(dim=['ensemble', 'time'])
 
     time_idx = int(argmax['time'].values)
@@ -106,7 +107,8 @@ def _main(args):
 
     #model data
     time_bounds = slice(f'{args.model_year}-01-01', f'{args.model_year}-12-31')
-    time_idx, ens_idx = get_max_indices(args.model_file, args.model_config, args.point, time_bounds) 
+    lon, lat = args.point
+    time_idx, ens_idx = get_max_indices(args.model_file, args.model_config, lat, lon, time_bounds) 
     ds = fileio.open_dataset(
         args.model_file,
         variables=['h500', 'tasmax'],
