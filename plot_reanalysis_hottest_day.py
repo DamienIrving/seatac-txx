@@ -12,7 +12,7 @@ import cartopy.crs as ccrs
 import xarray as xr
 
 from unseen import fileio
-from unseen import general_utils
+import plotting_utils
 
 
 def plot_usa(da_tasmax, da_h500, outfile, metadata_key, command_log,
@@ -61,7 +61,7 @@ def plot_usa(da_tasmax, da_h500, outfile, metadata_key, command_log,
 def _main(args):
     """Run the command line program."""
 
-    general_utils.set_plot_params(args.plotparams)
+    plotting_utils.set_plot_params(args.plotparams)
     
     ds_hgt = xr.open_dataset(args.hgt_file, engine='cfgrib')
     da_h500 = ds_hgt['z'].mean('time')
@@ -73,7 +73,7 @@ def _main(args):
 
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
-    metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
+    metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
     plot_usa(da_tasmax, da_h500, args.outfile, metadata_key, new_log,
              'Observations', point=args.point)
 

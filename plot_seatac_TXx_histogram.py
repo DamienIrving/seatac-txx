@@ -13,8 +13,8 @@ import pandas as pd
 from scipy.stats import genextreme as gev
 
 from unseen import fileio
-from unseen import general_utils
 from unseen import indices
+import plotting_utils
 
 
 def _main(args):
@@ -22,7 +22,7 @@ def _main(args):
 
     logfile = args.logfile if args.logfile else args.outfile.split('.')[0] + '.log'
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
-    general_utils.set_plot_params(args.plotparams)
+    plotting_utils.set_plot_params(args.plotparams)
     
     ds_obs = fileio.open_dataset(args.obs_file)
     obs_shape, obs_loc, obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
@@ -81,7 +81,7 @@ def _main(args):
     }
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
-    metadata_key = fileio.image_metadata_keys[args.outfile.split('.')[-1]]
+    metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
     plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')
 
 
