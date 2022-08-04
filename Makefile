@@ -1,4 +1,4 @@
-.PHONY: all tasmax-obs tasmax-forecast tasmax-bias-correction calc-txx-obs calc-txx-forecast calc-txx-forecast-bias-corrected plot-histogram plot-reanalysis-hot-day plot-model-hot-day plot-sample-size-dist plot-likelihoods plot-return-periods plot-annual-max plot-distribution clean help
+.PHONY: all tasmax-obs tasmax-forecast tasmax-bias-correction calc-txx-obs calc-txx-forecast calc-txx-forecast-bias-corrected plot-histogram plot-hot-day plot-sample-size-dist plot-likelihoods plot-return-periods plot-annual-max plot-distribution clean help
 
 include ${CONFIG}
 
@@ -50,15 +50,10 @@ plot-histogram : ${TXX_HISTOGRAM_PLOT}
 ${TXX_HISTOGRAM_PLOT} : ${OBS_TXX_FILE} ${FCST_TXX_FILE} ${FCST_TXX_BIAS_CORRECTED_FILE}
 	${PYTHON} plot_seatac_TXx_histogram.py $< $(word 2,$^) $(word 3,$^) $@  --plotparams ${PLOT_PARAMS}
 
-## plot-reanalysis-hot-day : plot reanalysis hottest day
-plot-reanalysis-hot-day : ${REANALYSIS_HOT_DAY_PLOT}
-${REANALYSIS_HOT_DAY_PLOT} : ${REANALYSIS_HGT_FILE} ${REANALYSIS_TAS_FILE}
-	${PYTHON} plot_reanalysis_hottest_day.py $< $(word 2,$^) $@  --plotparams ${PLOT_PARAMS} --point ${LON} ${LAT}
-
-## plot-model-hot-day : plot model hottest day
-plot-model-hot-day : ${MODEL_HOT_DAY_PLOT}
-${MODEL_HOT_DAY_PLOT} : ${FCST_HOT_DAY_DATA} ${FCST_METADATA}
-	${PYTHON} plot_model_hottest_day.py $< $(word 2,$^) ${LAT} ${LON} ${FCST_HOT_DAY_YEAR} $@ --plotparams ${PLOT_PARAMS}
+## plot-hot-day : plot hottest day in model and obs
+plot-hot-day : ${HOT_DAY_PLOT}
+${HOT_DAY_PLOT} : ${REANALYSIS_HGT_FILE} ${REANALYSIS_TAS_FILE} ${FCST_HOT_DAY_DATA} ${FCST_METADATA}
+	${PYTHON} plot_hottest_day.py $< $(word 2,$^) $(word 3,$^) $(word 4,$^) ${FCST_HOT_DAY_YEAR} $@ --plotparams ${PLOT_PARAMS} --point ${LON} ${LAT}
 
 ## plot-sample-size-dist : plot TXx sample size distribution
 plot-sample-size-dist : ${TXX_SAMPLE_PLOT}
