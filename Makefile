@@ -70,15 +70,10 @@ plot-return-periods : ${TXX_RETURN_PERIODS_PLOT}
 ${TXX_RETURN_PERIODS_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
 	${PYTHON} plot_TXx_return_periods.py $< $@ --plotparams ${PLOT_PARAMS}
 
-## plot-annual-max : plot maximum TXx by year
-plot-annual-max : ${TXX_ANNUAL_MAX_PLOT}
-${TXX_ANNUAL_MAX_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
-	${PYTHON} plot_maxTXx_by_year.py $< $@ --plotparams ${PLOT_PARAMS}
-
-## plot-distribution : plot TXx distribution by year
-plot-distribution : ${TXX_ANNUAL_DIST_PLOT}
-${TXX_ANNUAL_DIST_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
-	${PYTHON} plot_TXx_distribution.py $< $@ --plotparams ${PLOT_PARAMS}
+## plot-by-year : plot maximum TXx and distribution by year
+plot-by-year : ${TXX_BY_YEAR_PLOT}
+${TXX_BY_YEAR_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
+	${PYTHON} plot_model_TXx_by_year.py $< $@ --plotparams ${PLOT_PARAMS}
 
 ## clean : remove all generated files
 clean :
