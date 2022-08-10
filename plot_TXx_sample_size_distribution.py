@@ -10,8 +10,10 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import genextreme as gev
 
 from unseen import fileio
+from unseen import indices
 import plotting_utils
 
 
@@ -23,17 +25,15 @@ def _main(args):
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
     
     n_repeats = 1000
-    
     fig = plt.figure(figsize=[10, 16])
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
     
     # Panel a: Obs
-    
     ds_obs = fileio.open_dataset(args.obs_file)
     obs_shape, obs_loc, obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
     logging.info(f'Observations GEV fit: shape={obs_shape}, location={obs_loc}, scale={obs_scale}')
-    ##TODO: define df_random_obs
+    df_random_obs = pd.DataFrame()
     for sample_size in [10, 50, 100, 500, 1000, 5000, 10000]:
         estimates = []
         for resample in range(n_repeats):
@@ -47,18 +47,18 @@ def _main(args):
             estimates.append(txx_max)
         df_random_obs[sample_size] = estimates
     df_random_obs.boxplot(ax=ax1)
+    ax1.axhline(42.2, linestyle='--', color='0.5')
     ax1.set_title('(a) Maximum TXx from observations GEV')
     ax1.set_xlabel('sample size')
     ax1.set_ylabel('TXx (C)')   
         
     # Panel b: Model data
-    
     ds_ensemble = fileio.open_dataset(args.ensemble_file)
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
 
     population_size = ds_ensemble_stacked['tasmax'].size
     maximum = float(ds_ensemble_stacked['tasmax'].max().values)
-    logging.info(f'Maximum TXx: {maximum}C')
+    logging.info(f'Maximum model TXx: {maximum}C')
 
     df_random_model = pd.DataFrame([maximum]*n_repeats, columns=[population_size])
     for sample_size in [10, 50, 100, 500, 1000, 5000, 10000]:

@@ -57,8 +57,8 @@ ${HOT_DAY_PLOT} : ${REANALYSIS_HGT_FILE} ${REANALYSIS_TAS_FILE} ${FCST_HOT_DAY_D
 
 ## plot-sample-size-dist : plot TXx sample size distribution
 plot-sample-size-dist : ${TXX_SAMPLE_PLOT}
-${TXX_SAMPLE_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
-	${PYTHON} plot_TXx_sample_size_distribution.py $< $@ --plotparams ${PLOT_PARAMS}
+${TXX_SAMPLE_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE} ${OBS_TXX_FILE}
+	${PYTHON} plot_TXx_sample_size_distribution.py $< $(word 2,$^) $@ --plotparams ${PLOT_PARAMS}
 
 ## plot-likelihoods : plot TXx likelihoods
 plot-likelihoods : ${TXX_LIKELIHOOD_PLOT}
@@ -78,7 +78,7 @@ ${TXX_BY_YEAR_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
 ## plot-z500-rmse : plot z500 RMSE analysis
 plot-z500-rmse : ${Z500_RMSE_PLOT}
 ${Z500_RMSE_PLOT} : ${FCST_METADATA}
-    ${PYTHON} plot_z500_rmse.py ${FCST_DATA} $< $@ --plotparams ${PLOT_PARAMS}
+	${PYTHON} plot_z500_rmse.py ${FCST_DATA} $< $@ --plotparams ${PLOT_PARAMS} --txxmax_file ${FCST_HOT_DAY_DATA}
 
 ## clean : remove all generated files
 clean :
