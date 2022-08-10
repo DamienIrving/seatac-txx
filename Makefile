@@ -75,6 +75,11 @@ plot-by-year : ${TXX_BY_YEAR_PLOT}
 ${TXX_BY_YEAR_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
 	${PYTHON} plot_model_TXx_by_year.py $< $@ --plotparams ${PLOT_PARAMS}
 
+## plot-z500-rmse : plot z500 RMSE analysis
+plot-z500-rmse : ${Z500_RMSE_PLOT}
+${Z500_RMSE_PLOT} : ${FCST_METADATA}
+    ${PYTHON} plot_z500_rmse.py ${FCST_DATA} $< $@ --plotparams ${PLOT_PARAMS}
+
 ## clean : remove all generated files
 clean :
 	rm ${TXX_HISTOGRAM_PLOT} ${REANALYSIS_HOT_DAY_PLOT} ${MODEL_HOT_DAY_PLOT} ${TXX_SAMPLE_PLOT} ${TXX_LIKELIHOOD_PLOT} ${TXX_RETURN_PERIODS_PLOT} ${TXX_ANNUAL_MAX_PLOT} ${TXX_ANNUAL_DIST_PLOT}

@@ -43,3 +43,4 @@ TXX_SAMPLE_PLOT=${SEATAC_DIR}/figures/txx_samples_seatac.pdf
 TXX_LIKELIHOOD_PLOT=${SEATAC_DIR}/figures/txx_likelihoods_seatac.pdf
 TXX_RETURN_PERIODS_PLOT=${SEATAC_DIR}/figures/model_return_periods_seatac.pdf
 TXX_BY_YEAR_PLOT=${SEATAC_DIR}/figures/model_by_year_seatac.pdf
+Z500_RMSE_PLOT=${SEATAC_DIR}/figures/seatac_z500_rmse.pdf
