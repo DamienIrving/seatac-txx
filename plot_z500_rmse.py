@@ -55,6 +55,18 @@ def _main(args):
         lon + args.distance
     ]
     
+    # Calculate climatology
+    if args.anomaly:
+        clim_file = [args.txxmax_file] if args.txxmax_file else args.infiles[0]
+        ds = fileio.open_dataset(
+            clim_file,
+            variables=['h500'],
+            metadata_file=args.model_config,
+        )
+        da_h500_box = spatial_selection.select_box_region(ds['h500'], box)
+        climatology = da_h500_box.groupby("time.dayofyear").mean("time")
+    
+    # Find z500 on hottest day
     ensemble_max_tasmax = 0
     files_to_search = [args.txxmax_file] if args.txxmax_file else args.infiles
     for infile in files_to_search:
@@ -69,9 +81,12 @@ def _main(args):
         if max_tasmax > ensemble_max_tasmax:
             print(infile)
             da_h500_box = spatial_selection.select_box_region(ds['h500'], box)
+            if args.anomaly:
+                da_h500_box = da_h500_box.groupby("time.dayofyear") - climatology
             max_z500 = find_max_z500(da_tasmax, da_h500_box)
             ensemble_max_tasmax = max_tasmax
     
+    # Calculate metric
     metric_ds = pd.Series([])
     tasmax_ds = pd.Series([])
     for infile in args.infiles:
@@ -84,6 +99,8 @@ def _main(args):
         da_tasmax = spatial_selection.select_point_region(ds['tasmax'], [lat, lon])
         da_tasmax = general_utils.convert_units(da_tasmax, 'C')
         da_h500_box = spatial_selection.select_box_region(ds['h500'], box)
+        if args.anomaly:
+            da_h500_box = da_h500_box.groupby("time.dayofyear") - climatology
         da_tasmax_jja = da_tasmax.sel(time=is_jja(ds['time.month']))
         da_h500_box_jja = da_h500_box.sel(time=is_jja(ds['time.month']))
         if args.metric == 'rmse':
@@ -175,6 +192,12 @@ if __name__ == '__main__':
         default='rmse',
         choices=('rmse', 'corr'),
         help='plot the RMSE or pattern correlation'
+    )
+    parser.add_argument(
+        "--anomaly",
+        action="store_true",
+        default=False,
+        help="Work with z500 anomaly",
     )
     args = parser.parse_args()
     _main(args)
