@@ -72,7 +72,7 @@ def _main(args):
             max_z500 = find_max_z500(da_tasmax, da_h500_box)
             ensemble_max_tasmax = max_tasmax
     
-    rmse_ds = pd.Series([])
+    metric_ds = pd.Series([])
     tasmax_ds = pd.Series([])
     for infile in args.infiles:
         print(infile)
@@ -86,28 +86,40 @@ def _main(args):
         da_h500_box = spatial_selection.select_box_region(ds['h500'], box)
         da_tasmax_jja = da_tasmax.sel(time=is_jja(ds['time.month']))
         da_h500_box_jja = da_h500_box.sel(time=is_jja(ds['time.month']))
-        rmse_jja = xs.rmse(
-            max_z500,
-            da_h500_box_jja,
-            dim=['lat', 'lon'],
-            weights=None,
-            skipna=False,
-            keep_attrs=True
-        )
-        rmse_ds = rmse_ds.append(pd.Series(rmse_jja.values.flatten()), ignore_index=True)
+        if args.metric == 'rmse':
+            metric_jja = xs.rmse(
+                max_z500,
+                da_h500_box_jja,
+                dim=['lat', 'lon'],
+                weights=None,
+                skipna=False,
+                keep_attrs=True
+            )
+        elif args.metric == 'corr':
+            metric_jja = xs.pearson_r(
+                max_z500,
+                da_h500_box_jja,
+                dim=['lat', 'lon'],
+                weights=None,
+                skipna=False,
+                keep_attrs=True
+            )
+        metric_ds = metric_ds.append(pd.Series(metric_jja.values.flatten()), ignore_index=True)
         tasmax_ds = tasmax_ds.append(pd.Series(da_tasmax_jja.values.flatten()), ignore_index=True)
 
-    print(len(rmse_ds))
-    df_list = [rmse_ds, tasmax_ds]
-    headers = ['RMSE (m)', 'Tmax (C)']
+    print(len(metric_ds))
+    df_list = [metric_ds, tasmax_ds]
+    metric_label = 'RMSE' if args.metric == 'rmse' else 'pattern correlation'
+    xlim = (-5, 250) if args.metric == 'rmse' else None
+    headers = [metric_label, 'Tmax (C)']
     df = pd.concat(df_list, join='inner', axis=1)
     df.columns = headers
     g = sns.jointplot(
         data=df,
-        x='RMSE (m)',
+        x=metric_label,
         y='Tmax (C)',
         kind='reg',
-        xlim=(-5, 250),
+        xlim=xlim,
     #    joint_kws={'line_kws':{'color': 'tab:cyan'}},
         marginal_kws={'bins': 20},
         scatter_kws={'alpha': 0.2},
@@ -156,6 +168,13 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help='file containing the hottest day'
+    )
+    parser.add_argument(
+        '--metric',
+        type=str,
+        default='rmse',
+        choices=('rmse', 'corr'),
+        help='plot the RMSE or pattern correlation'
     )
     args = parser.parse_args()
     _main(args)
