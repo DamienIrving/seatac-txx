@@ -29,29 +29,6 @@ def _main(args):
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
     
-    # Panel a: Obs
-    ds_obs = fileio.open_dataset(args.obs_file)
-    obs_shape, obs_loc, obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
-    logging.info(f'Observations GEV fit: shape={obs_shape}, location={obs_loc}, scale={obs_scale}')
-    df_random_obs = pd.DataFrame()
-    for sample_size in [10, 50, 100, 500, 1000, 5000, 10000]:
-        estimates = []
-        for resample in range(n_repeats):
-            gev_data = gev.rvs(
-                obs_shape,
-                loc=obs_loc,
-                scale=obs_scale,
-                size=sample_size
-            )
-            txx_max = gev_data.max()
-            estimates.append(txx_max)
-        df_random_obs[sample_size] = estimates
-    df_random_obs.boxplot(ax=ax1)
-    ax1.axhline(42.2, linestyle='--', color='0.5')
-    ax1.set_title('(a) Maximum TXx from observations GEV')
-    ax1.set_xlabel('sample size')
-    ax1.set_ylabel('TXx (C)')   
-        
     # Panel b: Model data
     ds_ensemble = fileio.open_dataset(args.ensemble_file)
     ds_ensemble_stacked = ds_ensemble.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
@@ -76,6 +53,29 @@ def _main(args):
     ax2.set_xlabel('sample size')
     ax2.set_ylabel('TXx (C)')
 
+    # Panel a: Obs
+    ds_obs = fileio.open_dataset(args.obs_file)
+    obs_shape, obs_loc, obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
+    logging.info(f'Observations GEV fit: shape={obs_shape}, location={obs_loc}, scale={obs_scale}')
+    df_random_obs = pd.DataFrame()
+    for sample_size in [10, 50, 100, 500, 1000, 5000, 10000, population_size]:
+        estimates = []
+        for resample in range(n_repeats):
+            gev_data = gev.rvs(
+                obs_shape,
+                loc=obs_loc,
+                scale=obs_scale,
+                size=sample_size
+            )
+            txx_max = gev_data.max()
+            estimates.append(txx_max)
+        df_random_obs[sample_size] = estimates
+    df_random_obs.boxplot(ax=ax1)
+    ax1.axhline(42.2, linestyle='--', color='0.5')
+    ax1.set_title('(a) Maximum TXx from observations GEV')
+    ax1.set_xlabel('sample size')
+    ax1.set_ylabel('TXx (C)')   
+        
     infile_logs = {args.ensemble_file : ds_ensemble.attrs['history']}
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=sys.path[0])
     metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
