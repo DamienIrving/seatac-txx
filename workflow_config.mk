@@ -41,4 +41,6 @@ TXX_SAMPLE_PLOT=${SEATAC_DIR}/figures/txx_samples_seatac.pdf
 TXX_LIKELIHOOD_PLOT=${SEATAC_DIR}/figures/txx_likelihoods_seatac.pdf
 TXX_RETURN_PERIODS_PLOT=${SEATAC_DIR}/figures/model_return_periods_seatac.pdf
 TXX_BY_YEAR_PLOT=${SEATAC_DIR}/figures/model_by_year_seatac.pdf
-Z500_RMSE_PLOT=${SEATAC_DIR}/figures/seatac_z500_rmse.pdf
+Z500_RMSE_FILE=${SEATAC_DIR}/figures/seatac_z500_rmse.csv
+Z500_CORR_FILE=${SEATAC_DIR}/figures/seatac_z500-anomaly_corr.csv
+Z500_PLOT=${SEATAC_DIR}/figures/seatac_z500_pattern-analysis.png

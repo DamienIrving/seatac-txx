@@ -7,15 +7,12 @@ import logging
 import warnings
 warnings.filterwarnings('ignore')
 
-import matplotlib.pyplot as plt
 import xskillscore as xs
 import pandas as pd
-import seaborn as sns
 
 from unseen import fileio
 from unseen import spatial_selection
 from unseen import general_utils
-import plotting_utils
 
 
 def find_max_z500(da_tasmax, da_h500_box):
@@ -42,7 +39,6 @@ def is_jja(month):
 def _main(args):
     """Run the command line program."""
 
-    plotting_utils.set_plot_params(args.plotparams)
     logfile = args.logfile if args.logfile else args.outfile.split('.')[0] + '.log'
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
     
@@ -104,6 +100,7 @@ def _main(args):
         da_tasmax_jja = da_tasmax.sel(time=is_jja(ds['time.month']))
         da_h500_box_jja = da_h500_box.sel(time=is_jja(ds['time.month']))
         if args.metric == 'rmse':
+            metric_label = 'RMSE (m)'
             metric_jja = xs.rmse(
                 max_z500,
                 da_h500_box_jja,
@@ -113,6 +110,7 @@ def _main(args):
                 keep_attrs=True
             )
         elif args.metric == 'corr':
+            metric_label = 'pattern correlation'
             metric_jja = xs.pearson_r(
                 max_z500,
                 da_h500_box_jja,
@@ -126,48 +124,18 @@ def _main(args):
 
     print(len(metric_ds))
     df_list = [metric_ds, tasmax_ds]
-    metric_label = 'RMSE' if args.metric == 'rmse' else 'pattern correlation'
-    xlim = (-5, 250) if args.metric == 'rmse' else None
     headers = [metric_label, 'Tmax (C)']
     df = pd.concat(df_list, join='inner', axis=1)
     df.columns = headers
-    g = sns.jointplot(
-        data=df,
-        x=metric_label,
-        y='Tmax (C)',
-        kind='reg',
-        xlim=xlim,
-    #    joint_kws={'line_kws':{'color': 'tab:cyan'}},
-        marginal_kws={'bins': 20},
-        scatter_kws={'alpha': 0.2},
-        fit_reg=False,
-    )
-    g.plot_joint(sns.kdeplot, color="tab:cyan", zorder=10, levels=8)
+    df.to_csv(args.outfile)
+    
 
-    repo_dir = sys.path[0]
-    new_log = fileio.get_new_log(repo_dir=repo_dir)
-    metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
-    plt.savefig(
-        args.outfile,
-        metadata={metadata_key: new_log},
-        bbox_inches='tight',
-        facecolor='white',
-        dpi=300,
-    )
-
-        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("infiles", type=str, nargs='*', help="Input files")
     parser.add_argument("model_config", type=str, help="model configuration file")
-    parser.add_argument("outfile", type=str, help="Output file")
-    parser.add_argument(
-        '--plotparams',
-        type=str,
-        default=None,
-        help='matplotlib parameters (YAML file)'
-    )
+    parser.add_argument("outfile", type=str, help="Output csv file")
     parser.add_argument(
         '--distance',
         type=float,

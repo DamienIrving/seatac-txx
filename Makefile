@@ -3,6 +3,7 @@
 include ${CONFIG}
 
 PYTHON=/g/data/xv83/dbi599/miniconda3/envs/unseen/bin/python
+PYTHON_PATCHWORK=/g/data/xv83/dbi599/miniconda3/envs/patchwork/bin/python
 PLOT_PARAMS=plotparams_publication.yml
 
 ## tasmax-obs : preparation of observed tasmax data
@@ -75,10 +76,20 @@ plot-by-year : ${TXX_BY_YEAR_PLOT}
 ${TXX_BY_YEAR_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
 	${PYTHON} plot_model_TXx_by_year.py $< $@ --plotparams ${PLOT_PARAMS}
 
-## plot-z500-rmse : plot z500 RMSE analysis
-plot-z500-rmse : ${Z500_RMSE_PLOT}
-${Z500_RMSE_PLOT} : ${FCST_METADATA}
-	${PYTHON} plot_z500_rmse.py ${FCST_DATA} $< $@ --plotparams ${PLOT_PARAMS} --txxmax_file ${FCST_HOT_DAY_DATA}
+## calc-z500-rmse : perform z500 RMSE analysis
+calc-z500-rmse : ${Z500_RMSE_FILE}
+${Z500_RMSE_FILE} : ${FCST_METADATA}
+	${PYTHON} z500_pattern-analysis.py ${FCST_DATA} $< $@ --txxmax_file ${FCST_HOT_DAY_DATA} --metric rmse
+
+## calc-z500-corr : perform z500 pattern correlation analysis
+calc-z500-corr : ${Z500_CORR_FILE}
+${Z500_CORR_FILE} : ${FCST_METADATA}
+	${PYTHON} z500_pattern-analysis.py ${FCST_DATA} $< $@ --txxmax_file ${FCST_HOT_DAY_DATA} --metric corr --anomaly
+
+## plot-z500 : plot z500 pattern analysis
+plot-z500 : ${Z500_PLOT}
+${Z500_PLOT} : ${Z500_RMSE_FILE} ${Z500_CORR_FILE}
+	${PYTHON_PATCHWORK} plot_z500_pattern-analysis.py $< $(word 2,$^) $@ --plotparams ${PLOT_PARAMS}
 
 ## clean : remove all generated files
 clean :
