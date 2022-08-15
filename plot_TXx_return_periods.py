@@ -60,8 +60,8 @@ def _main(args):
     logging.info(f'TXx={threshold}C return period in full model ensemble: {full_model_return_period}')
 
     full_gev_shape, full_gev_loc, full_gev_scale = indices.fit_gev(ds_ensemble_stacked['tasmax'].values, generate_estimates=True)
-    full_gev_data = gev.rvs(full_gev_shape, loc=full_gev_loc, scale=full_gev_scale, size=args.gev_samples)
-    full_gev_return_period = return_period(full_gev_data, threshold)
+    full_gev_freq = gev.sf(threshold, full_gev_shape, loc=full_gev_loc, scale=full_gev_scale)
+    full_gev_return_period = 1. / full_gev_freq
     logging.info(f'TXx={threshold}C return period from GEV fit to full model ensemble: {full_gev_return_period}')
 
     full_data = {'return_period': [full_model_return_period, full_gev_return_period],
@@ -83,8 +83,8 @@ def _main(args):
                             'sample_size': sample_size,
                             'source': 'model samples'}, 
                                                         ignore_index=True)
-            gev_data = gev.rvs(gev_shape, loc=gev_loc, scale=gev_scale, size=args.gev_samples)  
-            gev_return_period = return_period(gev_data, threshold)
+            gev_freq = gev.sf(threshold, gev_shape, loc=gev_loc, scale=gev_scale)  
+            gev_return_period = 1. / gev_freq 
             df = df.append({'return_period': gev_return_period,
                             'sample_size': sample_size,
                             'source': 'GEV fits to model samples'},
@@ -111,7 +111,7 @@ def _main(args):
     ax.set_title('Return periods from model ensemble')
     ax.set_xlabel('sample size')
     ax.set_ylabel('return period for TXx=42.2C (years)')
-    ax.set_ylim(-100, 2100)
+    ax.set_ylim(-100, 2650)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles=handles, labels=labels)
     ax.set_axisbelow(True)
@@ -135,8 +135,6 @@ if __name__ == '__main__':
                         help='matplotlib parameters (YAML file)')
     parser.add_argument('--logfile', type=str, default=None,
                         help='name of logfile (default = same as outfile but with .log extension)')
-    parser.add_argument('--gev_samples', type=int, default=10000,
-                        help='number of times to sample the GEVs')
     parser.add_argument('--n_repeats', type=int, default=1000,
                         help='number of times to repeat each sample size')
     parser.add_argument('--plot', action='store_true', default=False,
