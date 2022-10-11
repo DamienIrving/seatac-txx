@@ -64,31 +64,48 @@ def _main(args):
     full_gev_return_period = 1. / full_gev_freq
     logging.info(f'TXx={threshold}C return period from GEV fit to full model ensemble: {full_gev_return_period}')
 
-    full_data = {'return_period': [full_model_return_period, full_gev_return_period],
-                 'sample_size': [population_size, population_size],
-                 'source': ['model samples', 'GEV fits to model samples']}
-    df = pd.DataFrame(full_data)
     sample_list = [10, 50, 100, 500, 1000, 5000, 10000]
+    if args.replacement:
+        sample_list.append(population_size)
+        full_data = {
+            'return_period': [],
+            'sample_size': [],
+            'source': [],
+        }
+    else:
+        full_data = {
+            'return_period': [full_model_return_period, full_gev_return_period],
+            'sample_size': [population_size, population_size],
+            'source': ['model samples', 'GEV fits to model samples'],
+        }
+    df = pd.DataFrame(full_data)
     for sample_size in sample_list:
         print(sample_size)
         for resample in range(args.n_repeats):
             gev_shape = 100
             while gev_shape > 1.0:
-                random_indexes = np.random.choice(population_size, size=sample_size, replace=False)
+                random_indexes = np.random.choice(
+                    population_size,
+                    size=sample_size,
+                    replace=args.replacement,
+                )
                 #random_indexes.sort()
                 model_subsample = ds_ensemble_stacked['tasmax'].isel({'sample': random_indexes})
-                gev_shape, gev_loc, gev_scale = indices.fit_gev(model_subsample.values, user_estimates=[full_gev_loc, full_gev_scale])
+                gev_shape, gev_loc, gev_scale = indices.fit_gev(
+                    model_subsample.values,
+                    user_estimates=[full_gev_loc, full_gev_scale],
+                )
             model_return_period = return_period(model_subsample.values, threshold)
-            df = df.append({'return_period': model_return_period,
-                            'sample_size': sample_size,
-                            'source': 'model samples'}, 
-                                                        ignore_index=True)
+            df = df.append(
+                {'return_period': model_return_period, 'sample_size': sample_size, 'source': 'model samples'}, 
+                ignore_index=True,
+            )
             gev_freq = gev.sf(threshold, gev_shape, loc=gev_loc, scale=gev_scale)  
             gev_return_period = 1. / gev_freq 
-            df = df.append({'return_period': gev_return_period,
-                            'sample_size': sample_size,
-                            'source': 'GEV fits to model samples'},
-                            ignore_index=True)
+            df = df.append(
+                {'return_period': gev_return_period, 'sample_size': sample_size, 'source': 'GEV fits to model samples'},
+                ignore_index=True,
+            )
             if args.plot:
                 if resample < 10:
                     fname = f'plot_sample-size-{sample_size}_repeat-{resample}.png'
@@ -101,9 +118,9 @@ def _main(args):
         logging.info(f'Infinite return periods (out of {args.n_repeats} repeats) in model samples (sample size {sample_size}): {model_inf_count}')
         gev_inf_count = df['return_period'].loc[(df['source'] == 'GEV fits to model samples') & (df['sample_size'] == sample_size)].isna().sum()
         logging.info(f'Infinite return periods (out of {args.n_repeats} repeats) in GEV samples (sample size {sample_size}): {gev_inf_count}')
-    df['return_period'].loc[df['sample_size'] == 10] = np.nan
-    df['return_period'].loc[df['sample_size'] == 50] = np.nan
-    df['return_period'].loc[df['sample_size'] == 100] = np.nan
+#    df['return_period'].loc[df['sample_size'] == 10] = np.nan
+#    df['return_period'].loc[df['sample_size'] == 50] = np.nan
+#    df['return_period'].loc[df['sample_size'] == 100] = np.nan
 
     #sns.set_style('whitegrid')
     fig, ax = plt.subplots(figsize=[10, 6])
@@ -139,6 +156,8 @@ if __name__ == '__main__':
                         help='number of times to repeat each sample size')
     parser.add_argument('--plot', action='store_true', default=False,
                         help='Plot some of the samples')
+    parser.add_argument('--replacement', action='store_true', default=False,
+                        help='Randomly sample with replacement [default is no replacement]')
     
     args = parser.parse_args()
     _main(args)
