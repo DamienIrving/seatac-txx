@@ -25,8 +25,10 @@ def _main(args):
     plotting_utils.set_plot_params(args.plotparams)
     
     ds_obs = fileio.open_dataset(args.obs_file)
-    obs_shape, obs_loc, obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
-    logging.info(f'Observations GEV fit: shape={obs_shape}, location={obs_loc}, scale={obs_scale}')
+    all_obs_shape, all_obs_loc, all_obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
+    logging.info(f'All observations GEV fit: shape={all_obs_shape}, location={all_obs_loc}, scale={all_obs_scale}')
+    nomax_obs_shape, nomax_obs_loc, nomax_obs_scale = indices.fit_gev(ds_obs['tasmax'].values[:-1])
+    logging.info(f'Observations with max omitted GEV fit: shape={nomax_obs_shape}, location={nomax_obs_loc}, scale={nomax_obs_scale}')
 
     ds_raw = fileio.open_dataset(args.raw_model_file)
     ds_raw_stacked = ds_raw.stack({'sample': ['ensemble', 'init_date', 'lead_time']}).compute()
@@ -76,8 +78,10 @@ def _main(args):
         color='tab:orange',
         label='Station Observations'
     )
-    obs_pdf = gev.pdf(gev_xvals, obs_shape, obs_loc, obs_scale)
-    ax2.plot(gev_xvals, obs_pdf, color='tab:orange', linewidth=2.0)
+    all_obs_pdf = gev.pdf(gev_xvals, all_obs_shape, all_obs_loc, all_obs_scale)
+    ax2.plot(gev_xvals, all_obs_pdf, color='tab:orange', linewidth=2.0)
+    nomax_obs_pdf = gev.pdf(gev_xvals, nomax_obs_shape, nomax_obs_loc, nomax_obs_scale)
+    ax2.plot(gev_xvals, nomax_obs_pdf, color='tab:orange', linestyle='--', linewidth=2.0)
 
     ax2.legend()
     ax2.set_xlabel('TXx (C)')
