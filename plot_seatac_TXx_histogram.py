@@ -27,7 +27,8 @@ def _main(args):
     ds_obs = fileio.open_dataset(args.obs_file)
     all_obs_shape, all_obs_loc, all_obs_scale = indices.fit_gev(ds_obs['tasmax'].values)
     logging.info(f'All observations GEV fit: shape={all_obs_shape}, location={all_obs_loc}, scale={all_obs_scale}')
-    nomax_obs_shape, nomax_obs_loc, nomax_obs_scale = indices.fit_gev(ds_obs['tasmax'].values[:-1])
+    obs_nomax_values = ds_obs['tasmax'].values[:-1]
+    nomax_obs_shape, nomax_obs_loc, nomax_obs_scale = indices.fit_gev(obs_nomax_values)
     logging.info(f'Observations with max omitted GEV fit: shape={nomax_obs_shape}, location={nomax_obs_loc}, scale={nomax_obs_scale}')
 
     ds_raw = fileio.open_dataset(args.raw_model_file)
@@ -60,12 +61,12 @@ def _main(args):
         bins=bins,
         density=True,
         rwidth=0.9,
-        alpha=0.7,
+        alpha=0.5,
         color='tab:blue',
         label='ACCESS-D'
     )
     bias_pdf = gev.pdf(gev_xvals, bias_shape, bias_loc, bias_scale)
-    ax2.plot(gev_xvals, bias_pdf, color='tab:blue', linewidth=2.0)
+    ax2.plot(gev_xvals, bias_pdf, color='tab:blue', linewidth=4.0)
     raw_pdf = gev.pdf(gev_xvals, raw_shape, raw_loc, raw_scale)
     ax2.plot(gev_xvals, raw_pdf, color='tab:blue', linestyle='--', linewidth=2.0)
 
@@ -74,12 +75,19 @@ def _main(args):
         bins=bins,
         density=True,
         rwidth=0.9,
-        alpha=0.7,
+        alpha=0.5,
         color='tab:orange',
         label='Station Observations'
     )
+
+    for year in range(len(obs_nomax_values)):
+        values = np.delete(obs_nomax_values, year)
+        shape, loc, scale = indices.fit_gev(values)
+        pdf = gev.pdf(gev_xvals, shape, loc, scale)
+        ax2.plot(gev_xvals, pdf, color='tab:gray', linewidth=1.5)
+
     all_obs_pdf = gev.pdf(gev_xvals, all_obs_shape, all_obs_loc, all_obs_scale)
-    ax2.plot(gev_xvals, all_obs_pdf, color='tab:orange', linewidth=2.0)
+    ax2.plot(gev_xvals, all_obs_pdf, color='tab:orange', linewidth=4.0)
     nomax_obs_pdf = gev.pdf(gev_xvals, nomax_obs_shape, nomax_obs_loc, nomax_obs_scale)
     ax2.plot(gev_xvals, nomax_obs_pdf, color='tab:orange', linestyle='--', linewidth=2.0)
 
@@ -95,7 +103,13 @@ def _main(args):
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(infile_logs=infile_logs, repo_dir=repo_dir)
     metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
-    plt.savefig(args.outfile, metadata={metadata_key: new_log}, bbox_inches='tight', facecolor='white')
+    plt.savefig(
+        args.outfile,
+        metadata={metadata_key: new_log},
+        bbox_inches='tight',
+        facecolor='white',
+        dpi=400,
+    )
 
 
 if __name__ == '__main__':
