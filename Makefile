@@ -52,9 +52,10 @@ ${TXX_HISTOGRAM_PLOT} : ${OBS_TXX_FILE} ${FCST_TXX_FILE} ${FCST_TXX_BIAS_CORRECT
 	${PYTHON} plot_seatac_TXx_histogram.py $< $(word 2,$^) $(word 3,$^) $@  --plotparams ${PLOT_PARAMS}
 
 ## plot-hot-day : plot hottest day in model and obs
+# Get model files, ensembles and dates from find_hot_days.ipynb
 plot-hot-day : ${HOT_DAY_PLOT}
-${HOT_DAY_PLOT} : ${REANALYSIS_HGT_FILE} ${REANALYSIS_TAS_FILE} ${FCST_HOT_DAY_DATA} ${FCST_METADATA}
-	${PYTHON} plot_hottest_day.py $< $(word 2,$^) $(word 3,$^) $(word 4,$^) ${FCST_HOT_DAY_YEAR} $@ --plotparams ${PLOT_PARAMS} --point ${LON} ${LAT}
+${HOT_DAY_PLOT} : ${REANALYSIS_HGT_FILE} ${REANALYSIS_TAS_FILE} ${FCST_METADATA}
+	${PYTHON} plot_hottest_day.py $< $(word 2,$^) 3 2 $(word 3,$^) $@ --plotparams ${PLOT_PARAMS} --point ${LON} ${LAT} --model_files ${FCST_HOT_DAY_FILES} --ensemble_numbers ${FCST_HOT_DAY_ENSEMBLES} --dates ${FCST_HOT_DAY_DATES}
 
 ## plot-sample-size-dist : plot TXx sample size distribution
 plot-sample-size-dist : ${TXX_SAMPLE_PLOT}

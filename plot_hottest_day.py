@@ -1,6 +1,6 @@
 """Plot hottest SeaTac day in observations and models"""
-
 import pdb
+import string
 import sys
 import argparse
 import warnings
@@ -17,50 +17,15 @@ from unseen import general_utils
 import plotting_utils
 
 
-def get_max_indices(infile, config_file, lat, lon, time_bounds):
-    """Get the time and ensemble index for hottest day at SeaTac"""
-
-    ds = fileio.open_dataset(
-        infile,
-        variables=['tasmax'],
-        metadata_file=config_file,
-        spatial_coords=[lat, lon],
-        sel={'time': time_bounds}
-    )
-
-    argmax = ds['tasmax'].argmax(dim=['ensemble', 'time'])
-
-    time_idx = int(argmax['time'].values)
-    date = ds['time'].values[time_idx].strftime('%Y-%m-%d')
-    logging.info(f'Max temperature at SeaTac, date: {date}')
-
-    ens_idx = int(argmax['ensemble'].values)
-    ensemble_member = ds['ensemble'].values[ens_idx]
-    logging.info(f'Max temperature at SeaTac, ensemble member: {ensemble_member}')
-
-    max_temp = float(ds['tasmax'].isel({'ensemble': ens_idx , 'time': time_idx}).values)
-    max_temp = max_temp - 273.15
-    logging.info(f'Maximum temperature at SeaTac: {max_temp}C')
-
-    return time_idx, ens_idx
-
-
-def plot_usa(ax, da_tasmax, da_h500, data_source, point=None):
+def plot_usa(ax, da_tasmax, da_h500, title, point=None):
     """Plot map of USA
 
     Args:
       da_tasmax (xarray DataArray) : maximum temperature data
       da_h500 (xarray DataArray) : 500hPa geopotential height data
-      data_source (str) : data source for title
+      title (str) : plot title
       point (list) : coordinates of point to plot (lon, lat)
     """
-    
-    if data_source == 'Observations':
-        title_prefix = 'a'
-    elif data_source == 'Model':
-        title_prefix = 'b'
-    else:
-        raise ValueError('Unrecognised data source')
 
     h500_levels = np.arange(5000, 6300, 50)
     
@@ -87,7 +52,9 @@ def plot_usa(ax, da_tasmax, da_h500, data_source, point=None):
     ax.coastlines()
     ax.set_extent([-140, -60, 20, 70])
     ax.gridlines(linestyle='--', draw_labels=True)
-    ax.set_title(f'({title_prefix}) Hottest day: {data_source}')
+    ax.set_title(title)
+
+    return lines
 
 
 def _main(args):
@@ -97,7 +64,6 @@ def _main(args):
     logging.basicConfig(level=logging.INFO, filename=logfile, filemode='w')
     plotting_utils.set_plot_params(args.plotparams)
     
-    #reanalysis data
     ds_hgt = xr.open_dataset(args.obs_hgt_file, engine='cfgrib')
     da_h500 = ds_hgt['z'].mean('time')
     da_h500 = da_h500 / 9.80665
@@ -105,31 +71,43 @@ def _main(args):
     da_tasmax = ds_tas['t2m'].max('time')
     da_tasmax = da_tasmax - 273.15
 
-    #model data
-    time_bounds = slice(f'{args.model_year}-01-01', f'{args.model_year}-12-31')
-    lon, lat = args.point
-    time_idx, ens_idx = get_max_indices(args.model_file, args.model_config, lat, lon, time_bounds) 
-    ds = fileio.open_dataset(
-        args.model_file,
-        variables=['h500', 'tasmax'],
-        metadata_file=args.model_config,
-        sel={'time': time_bounds}
-    )
-    ds_max = ds.isel({'ensemble': ens_idx, 'time': time_idx})
-    ds_max['tasmax'] = general_utils.convert_units(ds_max['tasmax'], 'C')
-    ds_max = ds_max.compute()
+    nrows = int(args.nrows)
+    ncols = int(args.ncols)
+    if (nrows == 3) and (ncols == 2):
+        figsize = [23, 20]
+    else:
+        raise ValueError('no figsize for that nrows/ncols combination')
 
-    fig = plt.figure(figsize=[12, 13])
+    fig = plt.figure(figsize=figsize)
     map_proj = ccrs.LambertConformal(
         central_longitude=262.5,
         central_latitude=38.5,
         standard_parallels=[38.5, 38.5]
     )
-    ax1 = fig.add_subplot(211, projection=map_proj)
-    ax2 = fig.add_subplot(212, projection=map_proj)
+    ax1 = fig.add_subplot(f'{nrows}{ncols}1', projection=map_proj)
+    im = plot_usa(ax1, da_tasmax, da_h500, '(a) Hottest day in observations', point=args.point)
 
-    plot_usa(ax1, da_tasmax, da_h500, 'Observations', point=args.point) 
-    plot_usa(ax2, ds_max['tasmax'], ds_max['h500'], 'Model', point=args.point)
+    n_model_plots = len(args.dates)
+    lon, lat = args.point
+    for plot_num in range(n_model_plots):
+        model_file = args.model_files[plot_num]
+        ensemble_number = args.ensemble_numbers[plot_num]
+        date = args.dates[plot_num]
+        ds = fileio.open_dataset(
+            model_file,
+            variables=['h500', 'tasmax'],
+            metadata_file=args.model_config,
+            sel={'time': date, 'ensemble': ensemble_number}
+        )
+        ds['tasmax'] = general_utils.convert_units(ds['tasmax'], 'C')
+        print(ds['tasmax'].sel({'lat': lat, 'lon': lon}, method='nearest').values)
+        ds = ds.compute()
+        ax = fig.add_subplot(f'{nrows}{ncols}{plot_num+2}', projection=map_proj)
+
+        init_date = model_file.split('/')[6].split('-')[-1]
+        letter = string.ascii_lowercase[plot_num + 1]
+        title = f'({letter}) Forecast {init_date}: {date}, ensemble {ensemble_number}'
+        im = plot_usa(ax, ds['tasmax'], ds['h500'], title, point=args.point)
 
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
@@ -151,17 +129,51 @@ if __name__ == '__main__':
 
     parser.add_argument("obs_hgt_file", type=str, help="reanalysis geopotential height file")
     parser.add_argument("obs_tas_file", type=str, help="reanalysis temperature file")
-    parser.add_argument("model_file", type=str, help="model data file")
+    parser.add_argument("nrows", type=str, help="number of rows for the plot")
+    parser.add_argument("ncols", type=str, help="number of columns for the plot")
     parser.add_argument("model_config", type=str, help="model configuration file")
-    parser.add_argument("model_year", type=str, help="model_year that the max TXx occurs in")
     parser.add_argument("outfile", type=str, help="output file")
-    
-    parser.add_argument('--point', type=float, nargs=2, metavar=('lon', 'lat'),
-                        default=None, help='plot marker at this point')
-    parser.add_argument('--plotparams', type=str, default=None,
-                        help='matplotlib parameters (YAML file)')
-    parser.add_argument('--logfile', type=str, default=None,
-                        help='name of logfile (default = same as outfile but with .log extension')
-    
+
+    parser.add_argument(
+        "--model_files",
+        type=str,
+        nargs='*',
+        required=True,
+        help="model data file for each hot day"
+    )
+    parser.add_argument(
+        "--ensemble_numbers",
+        type=int,
+        nargs='*',
+        required=True,
+        help="ensemble numbers for each hot day"
+    )
+    parser.add_argument(
+        "--dates",
+        type=str,
+        nargs='*',
+        required=True,
+        help="dates for each hot day"
+    )
+    parser.add_argument(
+        '--point',
+        type=float,
+        nargs=2,
+        metavar=('lon', 'lat'),
+        default=None,
+        help='plot marker at this point'
+    )
+    parser.add_argument(
+        '--plotparams',
+        type=str,
+        default=None,
+        help='matplotlib parameters (YAML file)'
+    )
+    parser.add_argument(
+        '--logfile',
+        type=str,
+        default=None,
+        help='name of logfile (default = same as outfile but with .log extension'
+    )
     args = parser.parse_args()
     _main(args)
