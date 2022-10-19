@@ -16,6 +16,13 @@ DASK_CONFIG=dask_local.yml
 FCST_DATA_1990S := $(sort $(wildcard /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-199[5,6,7,8,9]*/atmos_isobaric_daily.zarr.zip))
 FCST_DATA_2000S := $(sort $(wildcard /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-2*/atmos_isobaric_daily.zarr.zip))
 FCST_DATA := ${FCST_DATA_1990S} ${FCST_DATA_2000S}
+
+WATER_DATA_1990S := $(sort $(wildcard /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-199[5,6,7,8,9]*/land_month.zarr.zip))
+WATER_DATA_2000S := $(sort $(wildcard /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-2*/land_month.zarr.zip))
+WATER_DATA := ${WATER_DATA_1990S} ${WATER_DATA_2000S}
+WATER_METADATA=${CONFIG_DIR}/dataset_cafe_monthly.yml
+FCST_WATER_FILE=${SEATAC_DIR}/data/water_cafe-c5-d60-pX-f6_19950501-20201101_JJA-mean_${REGION_NAME}.zarr.zip
+
 FCST_HOT_DAY_FILES := /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-20000501/atmos_isobaric_daily.zarr.zip /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-20110501/atmos_isobaric_daily.zarr.zip /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-20181101/atmos_isobaric_daily.zarr.zip /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-20171101/atmos_isobaric_daily.zarr.zip /g/data/xv83/dcfp/CAFE-f6/c5-d60-pX-f6-20070501/atmos_isobaric_daily.zarr.zip
 FCST_HOT_DAY_ENSEMBLES := 62 81 43 56 64
 FCST_HOT_DAY_DATES := 2001-07-29 2018-07-22 2021-08-08 2020-07-23 2012-07-09

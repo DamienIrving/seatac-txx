@@ -16,6 +16,11 @@ tasmax-forecast : ${FCST_TASMAX_FILE}
 ${FCST_TASMAX_FILE} : ${FCST_METADATA}
 	fileio ${FCST_DATA} $@ --forecast --metadata_file $< --variables tasmax --units ${UNITS} --no_leap_day --input_freq D --spatial_coords ${LAT} ${LON} --output_chunks lead_time=50 --dask_config ${DASK_CONFIG}
 
+## water-forecast : preparation of CAFE water data
+water-forecast : ${FCST_WATER_FILE}
+${FCST_WATER_FILE} : ${WATER_METADATA}
+	fileio ${WATER_DATA} $@ --forecast --metadata_file $< --variables water --input_freq M --spatial_coords ${LAT} ${LON} --time_agg mean --season JJA --time_freq Q-NOV --reset_times
+
 ## tasmax-bias-correction : bias correct tasmax data using observations
 tasmax-bias-correction : ${FCST_TASMAX_BIAS_CORRECTED_FILE}
 ${FCST_TASMAX_BIAS_CORRECTED_FILE} : ${FCST_TASMAX_FILE} ${OBS_TASMAX_FILE}
