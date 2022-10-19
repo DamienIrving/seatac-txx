@@ -59,7 +59,7 @@ def plot_max_by_year(ax, ds_time):
     ax_twin.tick_params(axis='y', labelcolor=color)
     ax_twin.set_ylim(110, 2850)
 
-    ax.set_title('(a) Maximum TXx from model ensemble')
+    ax.set_title('(b) Maximum TXx from model ensemble')
     #fig.tight_layout()
 
 
@@ -76,8 +76,9 @@ def plot_distribution_by_year(ax, ds_time):
         logging.info(f'{nsamples} samples for the year {year}')
         year_df = pd.DataFrame(year_array)
         sns.kdeplot(year_df[0], ax=ax, color=c, label=str(year))
+    ax.grid(True)
     ax.set_xlim(26, 46)
-    ax.set_title('(b) TXx distribution from model ensemble')
+    ax.set_title('(a) TXx distribution from model ensemble')
     ax.set_xlabel('TXx (C)')
     ax.legend(ncol=2)
 
@@ -96,8 +97,8 @@ def _main(args):
     ax1 = fig.add_subplot(211)
     ax2 = fig.add_subplot(212)
     
-    plot_max_by_year(ax1, ds_time)
-    plot_distribution_by_year(ax2, ds_time)
+    plot_distribution_by_year(ax1, ds_time)
+    plot_max_by_year(ax2, ds_time)
     
     infile_logs = {args.ensemble_file : ds_init.attrs['history']}
     repo_dir = sys.path[0]
