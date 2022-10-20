@@ -41,60 +41,75 @@ def _main(args):
     bias_shape, bias_loc, bias_scale = indices.fit_gev(ds_bias_stacked['tasmax'].values, generate_estimates=True)
     logging.info(f'Model (bias corrected) GEV fit: shape={bias_shape}, location={bias_loc}, scale={bias_scale}')
 
-    fig = plt.figure(figsize=[10, 16])
-    ax1 = fig.add_subplot(211)
-    ax2 = fig.add_subplot(212)
+    fig = plt.figure(figsize=[10, 24])
+    ax1 = fig.add_subplot(311)
+    ax2 = fig.add_subplot(312)
+    ax3 = fig.add_subplot(313)
 
     bins = np.arange(23, 49)
     gev_xvals = np.arange(22, 49, 0.1)
     
+    #top panel
     ds_obs['tasmax'].plot(
         ax=ax1,
         marker='o',
+        color='tab:blue',
     )
     ax1.set_ylabel('temperature (C)')
     ax1.set_xlabel('year')
-    ax1.set_title('(a) TXx: SeaTac')
+    ax1.set_title('(a) TXx at SeaTac: Observed timeseries')
 
-    ds_bias_stacked['tasmax'].plot.hist(
-        ax=ax2,
-        bins=bins,
-        density=True,
-        rwidth=0.9,
-        alpha=0.5,
-        color='tab:blue',
-        label='ACCESS-D'
-    )
-    bias_pdf = gev.pdf(gev_xvals, bias_shape, bias_loc, bias_scale)
-    ax2.plot(gev_xvals, bias_pdf, color='tab:blue', linewidth=4.0)
-    raw_pdf = gev.pdf(gev_xvals, raw_shape, raw_loc, raw_scale)
-    ax2.plot(gev_xvals, raw_pdf, color='tab:blue', linestyle='--', linewidth=2.0)
-
+    #middle panel
     ds_obs['tasmax'].plot.hist(
         ax=ax2,
         bins=bins,
         density=True,
         rwidth=0.9,
         alpha=0.5,
-        color='tab:orange',
-        label='Station Observations'
+        color='tab:blue',
     )
-
     for year in range(len(obs_nomax_values)):
         values = np.delete(obs_nomax_values, year)
         shape, loc, scale = indices.fit_gev(values)
         pdf = gev.pdf(gev_xvals, shape, loc, scale)
         ax2.plot(gev_xvals, pdf, color='tab:gray', linewidth=1.5)
-
     all_obs_pdf = gev.pdf(gev_xvals, all_obs_shape, all_obs_loc, all_obs_scale)
-    ax2.plot(gev_xvals, all_obs_pdf, color='tab:orange', linewidth=4.0)
+    ax2.plot(gev_xvals, all_obs_pdf, color='tab:blue', linewidth=4.0)
     nomax_obs_pdf = gev.pdf(gev_xvals, nomax_obs_shape, nomax_obs_loc, nomax_obs_scale)
-    ax2.plot(gev_xvals, nomax_obs_pdf, color='tab:orange', linestyle='--', linewidth=2.0)
-
+    ax2.plot(gev_xvals, nomax_obs_pdf, color='tab:blue', linestyle='--', linewidth=2.0)
     ax2.legend()
     ax2.set_xlabel('TXx (C)')
     ax2.set_ylabel('probability')
-    ax2.set_title('(b) Histogram of TXx: SeaTac')
+    ax2.set_title('(b) TXx at SeaTac: Observed distribution')
+
+    #bottom panel
+    ds_obs['tasmax'].plot.hist(
+        ax=ax3,
+        bins=bins,
+        density=True,
+        rwidth=0.9,
+        alpha=0.5,
+        color='tab:blue',
+        label='Station Observations'
+    )
+    ax3.plot(gev_xvals, all_obs_pdf, color='tab:blue', linewidth=4.0)
+    ds_bias_stacked['tasmax'].plot.hist(
+        ax=ax3,
+        bins=bins,
+        density=True,
+        rwidth=0.9,
+        alpha=0.5,
+        color='tab:orange',
+        label='ACCESS-D'
+    )
+    bias_pdf = gev.pdf(gev_xvals, bias_shape, bias_loc, bias_scale)
+    ax3.plot(gev_xvals, bias_pdf, color='tab:orange', linewidth=4.0)
+    raw_pdf = gev.pdf(gev_xvals, raw_shape, raw_loc, raw_scale)
+    ax3.plot(gev_xvals, raw_pdf, color='tab:orange', linestyle='--', linewidth=2.0)
+    ax3.legend()
+    ax3.set_xlabel('TXx (C)')
+    ax3.set_ylabel('probability')
+    ax3.set_title('(c) TXx at SeaTac: Model and observed distribution')
 
     infile_logs = {
         args.bias_corrected_model_file: ds_bias.attrs['history'],
