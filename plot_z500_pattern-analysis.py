@@ -31,7 +31,7 @@ def _main(args):
         scatter_kws={'alpha': 0.2},
         fit_reg=False,
     )
-    g1.plot_joint(sns.kdeplot, color="tab:cyan", zorder=10, levels=8)
+    g1.plot_joint(sns.kdeplot, color="tab:cyan", zorder=10, levels=11)
     g1 = pw.load_seaborngrid(g1)
     
     g2 = sns.jointplot(
@@ -43,7 +43,7 @@ def _main(args):
         scatter_kws={'alpha': 0.2},
         fit_reg=False,
     )
-    g2.plot_joint(sns.kdeplot, color="tab:cyan", zorder=10, levels=8)
+    g2.plot_joint(sns.kdeplot, color="tab:cyan", zorder=10, levels=11)
     g2 = pw.load_seaborngrid(g2)
     
     metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]

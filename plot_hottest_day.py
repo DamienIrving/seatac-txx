@@ -117,7 +117,8 @@ def _main(args):
         args.outfile,
         metadata={metadata_key: new_log},
         bbox_inches='tight',
-        facecolor='white'
+        facecolor='white',
+        dpi=400,
     )
 
 
