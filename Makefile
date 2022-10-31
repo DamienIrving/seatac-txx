@@ -85,12 +85,12 @@ ${TXX_BY_YEAR_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE}
 ## calc-z500-rmse : perform z500 RMSE analysis
 calc-z500-rmse : ${Z500_RMSE_FILE}
 ${Z500_RMSE_FILE} : ${FCST_METADATA}
-	${PYTHON} z500_pattern-analysis.py ${FCST_DATA} $< $@ --txxmax_file ${FCST_HOT_DAY_DATA} --metric rmse
+	${PYTHON} z500_pattern-analysis.py ${FCST_DATA} $< $@ --txxmax_file ${FCST_HOT_DAY_FILE} --metric rmse
 
 ## calc-z500-corr : perform z500 pattern correlation analysis
 calc-z500-corr : ${Z500_CORR_FILE}
 ${Z500_CORR_FILE} : ${FCST_METADATA}
-	${PYTHON} z500_pattern-analysis.py ${FCST_DATA} $< $@ --txxmax_file ${FCST_HOT_DAY_DATA} --metric corr --anomaly
+	${PYTHON} z500_pattern-analysis.py ${FCST_DATA} $< $@ --txxmax_file ${FCST_HOT_DAY_FILE} --metric corr --anomaly
 
 ## plot-z500 : plot z500 pattern analysis
 plot-z500 : ${Z500_PLOT}

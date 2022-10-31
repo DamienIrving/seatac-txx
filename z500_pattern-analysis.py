@@ -83,8 +83,7 @@ def _main(args):
             ensemble_max_tasmax = max_tasmax
     
     # Calculate metric
-    metric_ds = pd.Series([])
-    tasmax_ds = pd.Series([])
+    df_list = []
     for infile in args.infiles:
         print(infile)
         ds = fileio.open_dataset(
@@ -119,14 +118,13 @@ def _main(args):
                 skipna=False,
                 keep_attrs=True
             )
-        metric_ds = metric_ds.append(pd.Series(metric_jja.values.flatten()), ignore_index=True)
-        tasmax_ds = tasmax_ds.append(pd.Series(da_tasmax_jja.values.flatten()), ignore_index=True)
-
-    print(len(metric_ds))
-    df_list = [metric_ds, tasmax_ds]
-    headers = [metric_label, 'Tmax (C)']
-    df = pd.concat(df_list, join='inner', axis=1)
-    df.columns = headers
+        metric_df = metric_jja.to_pandas().melt(ignore_index=False, value_name=args.metric)
+        tasmax_df = da_tasmax_jja.to_pandas().melt(ignore_index=False, value_name='tasmax')
+        infile_df = pd.merge(metric_df, tasmax_df, how='right', on=['time', 'ensemble'])
+        infile_df['forecast'] = [infile] * len(infile_df)
+        df_list.append(infile_df)
+    
+    df = pd.concat(df_list)
     df.to_csv(args.outfile)
     
 
