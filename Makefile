@@ -97,6 +97,11 @@ plot-z500 : ${Z500_PLOT}
 ${Z500_PLOT} : ${Z500_RMSE_FILE} ${Z500_CORR_FILE}
 	${PYTHON_PATCHWORK} plot_z500_pattern-analysis.py $< $(word 2,$^) $@ --plotparams ${PLOT_PARAMS}
 
+## plot-water-z500 : plot z500 vs water analysis
+plot-water-z500 : ${WATER_Z500_PLOT}
+${WATER_Z500_PLOT} : ${FCST_WATER_FILE}  ${FCST_TXX_FILE} ${Z500_RMSE_FILE}
+	${PYTHON} plot_water_scatter.py $< $(word 2,$^) $(word 3,$^) $@
+
 ## clean : remove all generated files
 clean :
 	rm ${TXX_HISTOGRAM_PLOT} ${REANALYSIS_HOT_DAY_PLOT} ${MODEL_HOT_DAY_PLOT} ${TXX_SAMPLE_PLOT} ${TXX_LIKELIHOOD_PLOT} ${TXX_RETURN_PERIODS_PLOT} ${TXX_ANNUAL_MAX_PLOT} ${TXX_ANNUAL_DIST_PLOT}

@@ -53,3 +53,4 @@ TXX_BY_YEAR_PLOT=${SEATAC_DIR}/figures/model_by_year_seatac.pdf
 Z500_RMSE_FILE=${SEATAC_DIR}/figures/seatac_z500_rmse.csv
 Z500_CORR_FILE=${SEATAC_DIR}/figures/seatac_z500-anomaly_corr.csv
 Z500_PLOT=${SEATAC_DIR}/figures/seatac_z500_pattern-analysis.png
+WATER_Z500_PLOT=${SEATAC_DIR}/figures/seatac_scatter-rmse-txx-water.png
