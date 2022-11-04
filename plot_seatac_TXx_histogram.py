@@ -67,17 +67,21 @@ def _main(args):
         rwidth=0.9,
         alpha=0.5,
         color='tab:blue',
+        label='Station observations',
     )
     for year in range(len(obs_nomax_values)):
         values = np.delete(obs_nomax_values, year)
         shape, loc, scale = indices.fit_gev(values)
         pdf = gev.pdf(gev_xvals, shape, loc, scale)
-        ax2.plot(gev_xvals, pdf, color='tab:gray', linewidth=1.5)
+        label = 'GEV fit: 1948-2020\nwith 1 year removed' if year == 0 else None
+        ax2.plot(gev_xvals, pdf, color='tab:gray', linewidth=1.5, label=label)
     all_obs_pdf = gev.pdf(gev_xvals, all_obs_shape, all_obs_loc, all_obs_scale)
-    ax2.plot(gev_xvals, all_obs_pdf, color='tab:blue', linewidth=4.0)
     nomax_obs_pdf = gev.pdf(gev_xvals, nomax_obs_shape, nomax_obs_loc, nomax_obs_scale)
-    ax2.plot(gev_xvals, nomax_obs_pdf, color='tab:blue', linestyle='--', linewidth=2.0)
-    ax2.legend()
+    ax2.plot(gev_xvals, nomax_obs_pdf, color='paleturquoise', linestyle='--', linewidth=2.0, label='GEV fit: 1948-2020')
+    ax2.plot(gev_xvals, all_obs_pdf, color='tab:blue', linewidth=4.0, label='GEV fit: 1948-2021')
+    handles, labels = ax2.get_legend_handles_labels()
+    order = [3, 2, 1, 0]
+    ax2.legend([handles[idx] for idx in order], [labels[idx] for idx in order]) 
     ax2.set_xlabel('TXx (C)')
     ax2.set_ylabel('probability')
     ax2.set_title('(b) TXx at SeaTac: Observed distribution')
@@ -90,9 +94,9 @@ def _main(args):
         rwidth=0.9,
         alpha=0.5,
         color='tab:blue',
-        label='Station Observations'
+        label='Station observations'
     )
-    ax3.plot(gev_xvals, all_obs_pdf, color='tab:blue', linewidth=4.0)
+    ax3.plot(gev_xvals, all_obs_pdf, color='tab:blue', linewidth=4.0, label='GEV fit: 1948-2021')
     ds_bias_stacked['tasmax'].plot.hist(
         ax=ax3,
         bins=bins,
@@ -100,13 +104,15 @@ def _main(args):
         rwidth=0.9,
         alpha=0.5,
         color='tab:orange',
-        label='ACCESS-D'
+        label='ACCESS-D\n(bias-corrected)'
     )
     bias_pdf = gev.pdf(gev_xvals, bias_shape, bias_loc, bias_scale)
-    ax3.plot(gev_xvals, bias_pdf, color='tab:orange', linewidth=4.0)
+    ax3.plot(gev_xvals, bias_pdf, color='tab:orange', linewidth=4.0, label='GEV fit: corrected')
     raw_pdf = gev.pdf(gev_xvals, raw_shape, raw_loc, raw_scale)
-    ax3.plot(gev_xvals, raw_pdf, color='tab:orange', linestyle='--', linewidth=2.0)
-    ax3.legend()
+    ax3.plot(gev_xvals, raw_pdf, color='tab:orange', linestyle='--', linewidth=2.0, label='GEV fit: uncorrected')
+    handles, labels = ax3.get_legend_handles_labels()
+    order = [3, 0, 4, 1, 2]
+    ax3.legend([handles[idx] for idx in order], [labels[idx] for idx in order]) 
     ax3.set_xlabel('TXx (C)')
     ax3.set_ylabel('probability')
     ax3.set_title('(c) TXx at SeaTac: Model and observed distribution')
