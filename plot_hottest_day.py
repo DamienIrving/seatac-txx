@@ -48,7 +48,7 @@ def plot_usa(ax, da_tasmax, da_h500, title, point=None):
     ax.clabel(lines, colors=['0.1'], manual=False, inline=True)
     if point:
         lon, lat = point
-        ax.plot(lon, lat, 'bo', transform=ccrs.PlateCarree())
+        ax.plot(lon, lat, marker='X', color='lime', transform=ccrs.PlateCarree())
     ax.coastlines()
     ax.set_extent([-140, -60, 20, 70])
     ax.gridlines(linestyle='--', draw_labels=True)
@@ -84,7 +84,7 @@ def _main(args):
         central_latitude=38.5,
         standard_parallels=[38.5, 38.5]
     )
-    ax1 = fig.add_subplot(f'{nrows}{ncols}1', projection=map_proj)
+    ax1 = fig.add_subplot(nrows, ncols, 1, projection=map_proj)
     im = plot_usa(ax1, da_tasmax, da_h500, '(a) Hottest day in observations', point=args.point)
 
     n_model_plots = len(args.dates)
@@ -102,7 +102,7 @@ def _main(args):
         ds['tasmax'] = general_utils.convert_units(ds['tasmax'], 'C')
         print(ds['tasmax'].sel({'lat': lat, 'lon': lon}, method='nearest').values)
         ds = ds.compute()
-        ax = fig.add_subplot(f'{nrows}{ncols}{plot_num+2}', projection=map_proj)
+        ax = fig.add_subplot(nrows, ncols, plot_num + 2, projection=map_proj)
 
         init_date = model_file.split('/')[6].split('-')[-1]
         letter = string.ascii_lowercase[plot_num + 1]
