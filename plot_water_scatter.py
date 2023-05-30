@@ -136,10 +136,12 @@ def _main(args):
     cbar.set_label('summer mean surface water (kg/m2)')
     sns.kdeplot(data=df, x='rmse', y='txx', color='0.3', linewidths=0.7)
 
-    plt.xlabel('RMSE (m)')
-    units = args.units
-    plt.ylabel(f'TXx ({units})')
-    
+    #plt.xlabel('RMSE (m)')
+    #plt.ylabel(f'TXx ({args.units})')
+    plt.xlabel('weather pattern similarity with hottest day (RMSE; m)')
+    plt.ylabel(f'temperature ({args.units})')
+    plt.title('Hottest day from each model year')
+
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
     metadata_key = plotting_utils.image_metadata_keys[args.outfile.split('.')[-1]]
