@@ -13,6 +13,7 @@ import numpy as np
 import seaborn as sns
 
 from unseen import fileio
+from unseen import general_utils
 import plotting_utils
 
 
@@ -71,6 +72,8 @@ def _main(args):
     ds_txx = xr.open_dataset(args.txx_file, engine='zarr')
     ds_txx_may = ds_txx.sel({'init_date': ds_summer_water['init_date'].dt.month == 5})
     ds_txx_nov = ds_txx.sel({'init_date': ds_summer_water['init_date'].dt.month == 11})
+    ds_txx_may['tasmax'] = general_utils.convert_units(ds_txx_may['tasmax'], args.units)
+    ds_txx_nov['tasmax'] = general_utils.convert_units(ds_txx_nov['tasmax'], args.units)
     
     rmse_df = pd.read_csv(args.rmse_file)
     rmse_df['time'] = pd.to_datetime(rmse_df['time'])
@@ -134,7 +137,8 @@ def _main(args):
     sns.kdeplot(data=df, x='rmse', y='txx', color='0.3', linewidths=0.7)
 
     plt.xlabel('RMSE (m)')
-    plt.ylabel('TXx (C)')
+    units = args.units
+    plt.ylabel(f'TXx ({units})')
     
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
@@ -170,6 +174,13 @@ if __name__ == '__main__':
         type=str,
         default=None,
         help='name of logfile (default = same as outfile but with .log extension'
+    )
+    parser.add_argument(
+        '--units',
+        type=str,
+        default='degC',
+        choices=('degC', 'degF'),
+        help='temperature units for plot'
     )
     args = parser.parse_args()
     _main(args)
