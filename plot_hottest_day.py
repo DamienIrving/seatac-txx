@@ -17,25 +17,33 @@ from unseen import general_utils
 import plotting_utils
 
 
-def plot_usa(ax, da_tasmax, da_h500, title, point=None):
+def plot_usa(ax, da_tasmax, da_h500, title, units='degC', point=None):
     """Plot map of USA
 
     Args:
       da_tasmax (xarray DataArray) : maximum temperature data
       da_h500 (xarray DataArray) : 500hPa geopotential height data
       title (str) : plot title
+      units (str) : Data units
       point (list) : coordinates of point to plot (lon, lat)
     """
 
     h500_levels = np.arange(5000, 6300, 50)
-    
+
+    if units == 'degC':
+        vmin = 10
+        vmax = 52
+    elif units == 'degF':
+        vmin = 50
+        vmax = 125
+
     da_tasmax.plot(
         ax=ax,
         transform=ccrs.PlateCarree(),
         cmap=plt.cm.hot_r,
-        vmin=10,
-        vmax=52,
-        cbar_kwargs={'label': 'maximum temperature (C)'},
+        vmin=vmin,
+        vmax=vmax,
+        cbar_kwargs={'label': f'maximum temperature ({units})'},
         #alpha=0.7
     )
     
@@ -68,13 +76,17 @@ def _main(args):
     da_h500 = ds_hgt['z'].mean('time')
     da_h500 = da_h500 / 9.80665
     ds_tas = xr.open_dataset(args.obs_tas_file, engine='cfgrib')
-    da_tasmax = ds_tas['t2m'].max('time')
-    da_tasmax = da_tasmax - 273.15
+    da_tasmax = ds_tas['t2m'].max('time', keep_attrs=True)
+    da_tasmax = general_utils.convert_units(da_tasmax, args.units)
 
     nrows = int(args.nrows)
     ncols = int(args.ncols)
     if (nrows == 3) and (ncols == 2):
         figsize = [23, 20]
+        title_a = '(a) Hottest day in observations' 
+    elif (nrows == 1) and (ncols == 2):
+        figsize = [23, 7]
+        title_a = 'Hottest day in observations'
     else:
         raise ValueError('no figsize for that nrows/ncols combination')
 
@@ -84,8 +96,8 @@ def _main(args):
         central_latitude=38.5,
         standard_parallels=[38.5, 38.5]
     )
-    ax1 = fig.add_subplot(nrows, ncols, 1, projection=map_proj)
-    im = plot_usa(ax1, da_tasmax, da_h500, '(a) Hottest day in observations', point=args.point)
+    ax1 = fig.add_subplot(nrows, ncols, 1, projection=map_proj)    
+    im = plot_usa(ax1, da_tasmax, da_h500, title_a, units=args.units, point=args.point)
 
     n_model_plots = len(args.dates)
     lon, lat = args.point
@@ -97,17 +109,18 @@ def _main(args):
             model_file,
             variables=['h500', 'tasmax'],
             metadata_file=args.model_config,
+            units={'tasmax': args.units},
             sel={'time': date, 'ensemble': ensemble_number}
         )
-        ds['tasmax'] = general_utils.convert_units(ds['tasmax'], 'C')
         print(ds['tasmax'].sel({'lat': lat, 'lon': lon}, method='nearest').values)
         ds = ds.compute()
         ax = fig.add_subplot(nrows, ncols, plot_num + 2, projection=map_proj)
 
         init_date = model_file.split('/')[6].split('-')[-1]
         letter = string.ascii_lowercase[plot_num + 1]
-        title = f'({letter}) Forecast {init_date}: {date}, ensemble {ensemble_number}'
-        im = plot_usa(ax, ds['tasmax'], ds['h500'], title, point=args.point)
+        #title = f'({letter}) Forecast {init_date}: {date}, ensemble {ensemble_number}'
+        title = 'Hottest day in model'
+        im = plot_usa(ax, ds['tasmax'], ds['h500'], title, units=args.units, point=args.point)
 
     repo_dir = sys.path[0]
     new_log = fileio.get_new_log(repo_dir=repo_dir)
@@ -163,6 +176,13 @@ if __name__ == '__main__':
         metavar=('lon', 'lat'),
         default=None,
         help='plot marker at this point'
+    )
+    parser.add_argument(
+        '--units',
+        type=str,
+        default='degC',
+        choices=('degC', 'degF'),
+        help='temperature units for plot'
     )
     parser.add_argument(
         '--plotparams',
