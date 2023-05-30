@@ -65,7 +65,7 @@ ${HOT_DAY_PLOT} : ${REANALYSIS_HGT_FILE} ${REANALYSIS_TAS_FILE} ${FCST_METADATA}
 ## plot-sample-size-dist : plot TXx sample size distribution
 plot-sample-size-dist : ${TXX_SAMPLE_PLOT}
 ${TXX_SAMPLE_PLOT} : ${FCST_TXX_BIAS_CORRECTED_FILE} ${OBS_TXX_FILE}
-	${PYTHON} plot_TXx_sample_size_distribution.py $< $(word 2,$^) $@ --plotparams ${PLOT_PARAMS}
+	${PYTHON} plot_TXx_sample_size_distribution.py $< $@ --obs_file $(word 2,$^) --plotparams ${PLOT_PARAMS}
 
 ## plot-likelihoods : plot TXx likelihoods
 plot-likelihoods : ${TXX_LIKELIHOOD_PLOT}
